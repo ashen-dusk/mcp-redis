@@ -1,0 +1,270 @@
+/**
+ * SSE Client for MCP Connections
+ * Browser-side client that connects to SSE endpoint
+ */
+
+import type { McpConnectionEvent, McpObservabilityEvent } from '../shared/events';
+import type { McpRpcRequest, McpRpcResponse } from '../shared/types';
+
+export interface SSEClientOptions {
+  /**
+   * SSE endpoint URL
+   */
+  url: string;
+
+  /**
+   * User ID for authentication
+   */
+  userId: string;
+
+  /**
+   * Optional auth token
+   */
+  authToken?: string;
+
+  /**
+   * Connection event callback
+   */
+  onConnectionEvent?: (event: McpConnectionEvent) => void;
+
+  /**
+   * Observability event callback
+   */
+  onObservabilityEvent?: (event: McpObservabilityEvent) => void;
+
+  /**
+   * Connection status callback
+   */
+  onStatusChange?: (status: 'connecting' | 'connected' | 'disconnected' | 'error') => void;
+}
+
+/**
+ * SSE Client for real-time MCP connection management
+ */
+export class SSEClient {
+  private eventSource: EventSource | null = null;
+  private pendingRequests: Map<
+    string,
+    { resolve: (value: any) => void; reject: (error: Error) => void }
+  > = new Map();
+  private requestId: number = 0;
+  private reconnectAttempts: number = 0;
+  private maxReconnectAttempts: number = 5;
+  private reconnectDelay: number = 1000;
+  private isManuallyDisconnected: boolean = false;
+
+  constructor(private options: SSEClientOptions) {}
+
+  /**
+   * Connect to SSE endpoint
+   */
+  connect(): void {
+    if (this.eventSource) {
+      return; // Already connected
+    }
+
+    this.isManuallyDisconnected = false;
+    this.options.onStatusChange?.('connecting');
+
+    // Build URL with query params
+    const url = new URL(this.options.url);
+    url.searchParams.set('userId', this.options.userId);
+    if (this.options.authToken) {
+      url.searchParams.set('token', this.options.authToken);
+    }
+
+    // Create EventSource
+    this.eventSource = new EventSource(url.toString());
+
+    // Handle connection open
+    this.eventSource.addEventListener('open', () => {
+      console.log('[SSEClient] Connected');
+      this.reconnectAttempts = 0;
+      this.options.onStatusChange?.('connected');
+    });
+
+    // Handle 'connected' event
+    this.eventSource.addEventListener('connected', (e: MessageEvent) => {
+      const data = JSON.parse(e.data);
+      console.log('[SSEClient] Initial connection:', data);
+    });
+
+    // Handle 'connection' events (MCP connection state changes)
+    this.eventSource.addEventListener('connection', (e: MessageEvent) => {
+      const event: McpConnectionEvent = JSON.parse(e.data);
+      this.options.onConnectionEvent?.(event);
+    });
+
+    // Handle 'observability' events (debugging/logging)
+    this.eventSource.addEventListener('observability', (e: MessageEvent) => {
+      const event: McpObservabilityEvent = JSON.parse(e.data);
+      this.options.onObservabilityEvent?.(event);
+    });
+
+    // Handle 'rpc-response' events (RPC method responses)
+    this.eventSource.addEventListener('rpc-response', (e: MessageEvent) => {
+      const response: McpRpcResponse = JSON.parse(e.data);
+      this.handleRpcResponse(response);
+    });
+
+    // Handle errors
+    this.eventSource.addEventListener('error', () => {
+      console.error('[SSEClient] Connection error');
+      this.options.onStatusChange?.('error');
+
+      // Attempt reconnection
+      if (!this.isManuallyDisconnected && this.reconnectAttempts < this.maxReconnectAttempts) {
+        this.reconnectAttempts++;
+        console.log(`[SSEClient] Reconnecting (attempt ${this.reconnectAttempts})...`);
+
+        setTimeout(() => {
+          this.disconnect();
+          this.connect();
+        }, this.reconnectDelay * this.reconnectAttempts);
+      }
+    });
+  }
+
+  /**
+   * Disconnect from SSE endpoint
+   */
+  disconnect(): void {
+    this.isManuallyDisconnected = true;
+
+    if (this.eventSource) {
+      this.eventSource.close();
+      this.eventSource = null;
+    }
+
+    // Reject all pending requests
+    for (const [id, { reject }] of this.pendingRequests.entries()) {
+      reject(new Error('Connection closed'));
+    }
+    this.pendingRequests.clear();
+
+    this.options.onStatusChange?.('disconnected');
+  }
+
+  /**
+   * Send RPC request via SSE
+   * Note: SSE is unidirectional (server->client), so we need to send requests via POST
+   */
+  private async sendRequest(method: string, params?: any): Promise<any> {
+    const id = `${++this.requestId}`;
+
+    const request: McpRpcRequest = {
+      id,
+      method: method as any,
+      params,
+    };
+
+    // Create promise for response
+    const promise = new Promise((resolve, reject) => {
+      this.pendingRequests.set(id, { resolve, reject });
+
+      // Timeout after 30 seconds
+      setTimeout(() => {
+        if (this.pendingRequests.has(id)) {
+          this.pendingRequests.delete(id);
+          reject(new Error('Request timeout'));
+        }
+      }, 30000);
+    });
+
+    // Send request via POST to same endpoint
+    try {
+      const url = new URL(this.options.url);
+      url.searchParams.set('userId', this.options.userId);
+
+      await fetch(url.toString(), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(this.options.authToken && { Authorization: `Bearer ${this.options.authToken}` }),
+        },
+        body: JSON.stringify(request),
+      });
+    } catch (error) {
+      this.pendingRequests.delete(id);
+      throw error;
+    }
+
+    return promise;
+  }
+
+  /**
+   * Handle RPC response
+   */
+  private handleRpcResponse(response: McpRpcResponse): void {
+    const pending = this.pendingRequests.get(response.id);
+
+    if (pending) {
+      this.pendingRequests.delete(response.id);
+
+      if (response.error) {
+        pending.reject(new Error(response.error.message));
+      } else {
+        pending.resolve(response.result);
+      }
+    }
+  }
+
+  /**
+   * Get all user sessions
+   */
+  async getSessions(): Promise<any> {
+    return this.sendRequest('getSessions');
+  }
+
+  /**
+   * Connect to an MCP server
+   */
+  async connectToServer(params: {
+    serverId: string;
+    serverName: string;
+    serverUrl: string;
+    callbackUrl: string;
+    transportType?: 'sse' | 'streamable_http';
+  }): Promise<any> {
+    return this.sendRequest('connect', params);
+  }
+
+  /**
+   * Disconnect from an MCP server
+   */
+  async disconnectFromServer(sessionId: string): Promise<any> {
+    return this.sendRequest('disconnect', { sessionId });
+  }
+
+  /**
+   * List tools from a session
+   */
+  async listTools(sessionId: string): Promise<any> {
+    return this.sendRequest('listTools', { sessionId });
+  }
+
+  /**
+   * Call a tool
+   */
+  async callTool(
+    sessionId: string,
+    toolName: string,
+    toolArgs: Record<string, unknown>
+  ): Promise<any> {
+    return this.sendRequest('callTool', { sessionId, toolName, toolArgs });
+  }
+
+  /**
+   * Refresh/validate a session
+   */
+  async refreshSession(sessionId: string): Promise<any> {
+    return this.sendRequest('refreshSession', { sessionId });
+  }
+
+  /**
+   * Check if connected
+   */
+  isConnected(): boolean {
+    return this.eventSource !== null && this.eventSource.readyState === EventSource.OPEN;
+  }
+}
