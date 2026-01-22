@@ -1,6 +1,6 @@
 {
   "name": "@mcp-assistant/mcp-redis",
-  "version": "1.0.0-beta.1",
+  "version": "1.0.0-beta.2",
   "publishConfig": {
     "access": "public"
   },
