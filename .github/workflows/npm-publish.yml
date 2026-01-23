@@ -35,5 +35,4 @@ jobs:
 
       - name: Publish to npm
         run: npm publish --provenance
-        env:
         continue-on-error: true # Don't fail if version exists
