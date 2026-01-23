@@ -127,4 +127,4 @@ MIT © MCP Assistant
 
 ---
 
-> Built with 💙 by MCP Assistant • Powered by Redis & SSE
+
