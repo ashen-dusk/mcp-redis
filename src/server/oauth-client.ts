@@ -928,46 +928,6 @@ export class MCPClient {
   }
 
   /**
-   * Fetches comprehensive server metadata
-   * Includes version, capabilities, instructions, prompts, resources, and tools
-   * @returns Object containing all available server metadata
-   * @throws {Error} When client is not connected
-   */
-  async getAdditionalData(): Promise<{
-    serverVersion?: any;
-    serverCapabilities?: any;
-    instructions?: string;
-    prompts?: any[];
-    resources?: any[];
-    resourceTemplates?: any[];
-    tools?: any[];
-  }> {
-    if (!this.client) {
-      throw new Error('Not connected to server');
-    }
-
-    try {
-      const promptsResponse = await this.client.listPrompts();
-      const resourcesResponse = await this.client.listResources();
-      const templatesResponse = await this.client.listResourceTemplates();
-      const toolsResponse = await this.listTools();
-
-      return {
-        serverVersion: await this.client.getServerVersion(),
-        serverCapabilities: await this.client.getServerCapabilities(),
-        instructions: await this.client.getInstructions(),
-        prompts: (promptsResponse as any).prompts || [],
-        resources: (resourcesResponse as any).resources || [],
-        resourceTemplates: (templatesResponse as any).resourceTemplates || [],
-        tools: toolsResponse.tools || [],
-      };
-    } catch (error) {
-      console.error('[MCPClient] Failed to retrieve server data:', error);
-      throw error;
-    }
-  }
-
-  /**
    * Gets MCP server configuration for all active user sessions
    * Loads sessions from Redis, validates OAuth tokens, refreshes if expired
    * Returns ready-to-use configuration with valid auth headers
