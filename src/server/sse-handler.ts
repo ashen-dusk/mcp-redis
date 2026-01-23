@@ -9,6 +9,13 @@ import type { McpRpcRequest, McpRpcResponse } from '../shared/types';
 import { MCPClient } from './oauth-client';
 import { sessionStore } from './session-store';
 
+export interface ClientMetadata {
+  clientName?: string;
+  clientUri?: string;
+  logoUri?: string;
+  policyUri?: string;
+}
+
 export interface SSEHandlerOptions {
   /**
    * User ID for authentication
@@ -24,6 +31,17 @@ export interface SSEHandlerOptions {
    * Heartbeat interval in ms (default: 30000)
    */
   heartbeatInterval?: number;
+
+  /**
+   * Static OAuth client metadata defaults (for all connections)
+   */
+  clientDefaults?: ClientMetadata;
+
+  /**
+   * Dynamic OAuth client metadata getter (per-request, useful for multi-tenant)
+   * Takes precedence over clientDefaults
+   */
+  getClientMetadata?: (request?: any) => ClientMetadata | Promise<ClientMetadata>;
 }
 
 /**
@@ -42,6 +60,27 @@ export class SSEConnectionManager {
   ) {
     this.userId = options.userId;
     this.startHeartbeat();
+  }
+
+  /**
+   * Get resolved client metadata (dynamic > static > defaults)
+   */
+  private async getResolvedClientMetadata(request?: any): Promise<ClientMetadata> {
+    // Priority: getClientMetadata() > clientDefaults > empty object
+    let metadata: ClientMetadata = {};
+
+    // Start with static defaults
+    if (this.options.clientDefaults) {
+      metadata = { ...this.options.clientDefaults };
+    }
+
+    // Override with dynamic metadata if provided
+    if (this.options.getClientMetadata) {
+      const dynamicMetadata = await this.options.getClientMetadata(request);
+      metadata = { ...metadata, ...dynamicMetadata };
+    }
+
+    return metadata;
   }
 
   /**
@@ -192,6 +231,9 @@ export class SSEConnectionManager {
     });
 
     try {
+      // Get resolved client metadata
+      const clientMetadata = await this.getResolvedClientMetadata();
+
       // Create MCP client
       const client = new MCPClient({
         userId: this.userId,
@@ -201,6 +243,7 @@ export class SSEConnectionManager {
         serverUrl,
         callbackUrl,
         transportType,
+        ...clientMetadata, // Spread client metadata (clientName, clientUri, logoUri, policyUri)
         onRedirect: (authUrl) => {
           // Emit auth required event
           this.emitConnectionEvent({
@@ -384,10 +427,14 @@ export class SSEConnectionManager {
     });
 
     try {
+      // Get resolved client metadata
+      const clientMetadata = await this.getResolvedClientMetadata();
+
       // Try to restore and validate
       const client = new MCPClient({
         userId: this.userId,
         sessionId,
+        ...clientMetadata, // Include metadata for consistency
       });
 
       await client.connect();

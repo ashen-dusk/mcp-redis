@@ -9,7 +9,7 @@ export { SessionStore, sessionStore } from './session-store';
 export { RedisOAuthClientProvider } from './redis-oauth-client-provider';
 
 // SSE handler for real-time connections
-export { createSSEHandler, SSEConnectionManager, type SSEHandlerOptions } from './sse-handler';
+export { createSSEHandler, SSEConnectionManager, type SSEHandlerOptions, type ClientMetadata } from './sse-handler';
 
 // Next.js App Router handler (recommended for Next.js 13+)
 export { createNextMcpHandler, type NextMcpHandlerOptions } from './nextjs-handler';

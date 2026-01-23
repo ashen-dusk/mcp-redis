@@ -55,6 +55,11 @@ export interface MCPOAuthClientOptions {
   clientSecret?: string;
   onSaveTokens?: (tokens: OAuthTokens) => void;
   headers?: Record<string, string>;
+  // OAuth Client Metadata (optional - user application info)
+  clientName?: string;
+  clientUri?: string;
+  logoUri?: string;
+  policyUri?: string;
 }
 
 /**
@@ -91,6 +96,11 @@ export class MCPClient {
   private clientSecret?: string;
   private onSaveTokens?: (tokens: OAuthTokens) => void;
   private headers?: Record<string, string>;
+  // OAuth Client Metadata
+  private clientName?: string;
+  private clientUri?: string;
+  private logoUri?: string;
+  private policyUri?: string;
 
   // Event emitters for connection lifecycle
   private readonly _onConnectionEvent = new Emitter<McpConnectionEvent>();
@@ -122,6 +132,10 @@ export class MCPClient {
     this.clientSecret = options.clientSecret;
     this.onSaveTokens = options.onSaveTokens;
     this.headers = options.headers;
+    this.clientName = options.clientName;
+    this.clientUri = options.clientUri;
+    this.logoUri = options.logoUri;
+    this.policyUri = options.policyUri;
   }
 
   /**
@@ -261,16 +275,16 @@ export class MCPClient {
     });
 
     const clientMetadata: OAuthClientMetadata = {
-      client_name: 'MCP Assistant',
+      client_name: this.clientName || 'MCP Assistant',
       redirect_uris: [this.callbackUrl],
       grant_types: ['authorization_code', 'refresh_token'],
       response_types: ['code'],
       token_endpoint_auth_method: 'client_secret_basic',
-      client_uri: 'https://mcp-assistant.in',
-      logo_uri: 'https://mcp-assistant.in/logo.png',
-      policy_uri: 'https://mcp-assistant.in/privacy',
-      software_id: 'mcp-assistant',
-      software_version: '0.2.1',
+      client_uri: this.clientUri || 'https://mcp-assistant.in',
+      logo_uri: this.logoUri || 'https://mcp-assistant.in/logo.png',
+      policy_uri: this.policyUri || 'https://mcp-assistant.in/privacy',
+      software_id: '@mcp-ts/redis',
+      software_version: '1.0.0-beta.4',
       ...(this.clientId ? { client_id: this.clientId } : {}),
       ...(this.clientSecret ? { client_secret: this.clientSecret } : {}),
     };

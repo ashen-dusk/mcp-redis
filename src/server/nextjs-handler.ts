@@ -3,7 +3,7 @@
  * Provides a clean, zero-boilerplate API for Next.js applications
  */
 
-import { SSEConnectionManager } from './sse-handler.js';
+import { SSEConnectionManager, type ClientMetadata } from './sse-handler.js';
 import type { McpConnectionEvent, McpObservabilityEvent } from '../shared/events.js';
 import type { McpRpcResponse } from '../shared/types.js';
 
@@ -28,6 +28,19 @@ export interface NextMcpHandlerOptions {
    * Heartbeat interval in milliseconds (default: 30000)
    */
   heartbeatInterval?: number;
+
+  /**
+   * Static OAuth client metadata defaults (for all connections)
+   * Use this for single-tenant applications with fixed branding
+   */
+  clientDefaults?: ClientMetadata;
+
+  /**
+   * Dynamic OAuth client metadata getter (per-request, useful for multi-tenant)
+   * Use this when you need different branding based on request (tenant, domain, etc.)
+   * Takes precedence over clientDefaults
+   */
+  getClientMetadata?: (request: Request) => ClientMetadata | Promise<ClientMetadata>;
 }
 
 // Global manager store - shared across requests for the same user
@@ -53,6 +66,8 @@ export function createNextMcpHandler(options: NextMcpHandlerOptions = {}) {
     },
     authenticate = () => true,
     heartbeatInterval = 30000,
+    clientDefaults,
+    getClientMetadata,
   } = options;
 
   /**
@@ -94,11 +109,17 @@ export function createNextMcpHandler(options: NextMcpHandlerOptions = {}) {
       previousManager.dispose();
     }
 
+    // Resolve client metadata (dynamic takes precedence over static)
+    const resolvedClientMetadata = getClientMetadata
+      ? await getClientMetadata(request)
+      : clientDefaults;
+
     // Create new manager
     const manager = new SSEConnectionManager(
       {
         userId,
         heartbeatInterval,
+        clientDefaults: resolvedClientMetadata, // Pass resolved metadata
       },
       (event: McpConnectionEvent | McpObservabilityEvent | McpRpcResponse) => {
         // Determine event type and send via SSE
