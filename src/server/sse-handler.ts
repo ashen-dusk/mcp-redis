@@ -18,14 +18,14 @@ export interface ClientMetadata {
 
 export interface SSEHandlerOptions {
   /**
-   * User ID for authentication
+   * User/Client identifier
    */
-  userId: string;
+  identity: string;
 
   /**
    * Optional callback for authentication/authorization
    */
-  onAuth?: (userId: string) => Promise<boolean>;
+  onAuth?: (identity: string) => Promise<boolean>;
 
   /**
    * Heartbeat interval in ms (default: 30000)
@@ -49,7 +49,7 @@ export interface SSEHandlerOptions {
  * Handles a single SSE connection and manages MCP operations
  */
 export class SSEConnectionManager {
-  private userId: string;
+  private identity: string;
   private clients: Map<string, MCPClient> = new Map();
   private heartbeatTimer?: NodeJS.Timeout;
   private isActive: boolean = true;
@@ -58,7 +58,7 @@ export class SSEConnectionManager {
     private options: SSEHandlerOptions,
     private sendEvent: (event: McpConnectionEvent | McpObservabilityEvent | McpRpcResponse) => void
   ) {
-    this.userId = options.userId;
+    this.identity = options.identity;
     this.startHeartbeat();
   }
 
@@ -174,14 +174,14 @@ export class SSEConnectionManager {
    * Get all user sessions
    */
   private async getSessions(): Promise<any> {
-    const sessions = await sessionStore.getUserSessionsData(this.userId);
+    const sessions = await sessionStore.getIdentitySessionsData(this.identity);
 
     this.sendEvent({
       level: 'debug',
-      message: `Retrieved ${sessions.length} sessions for user ${this.userId}`,
+      message: `Retrieved ${sessions.length} sessions for identity ${this.identity}`,
       timestamp: Date.now(),
       metadata: {
-        userId: this.userId,
+        identity: this.identity,
         sessionCount: sessions.length,
         sessions: sessions.map(s => ({
           sessionId: s.sessionId,
@@ -236,7 +236,7 @@ export class SSEConnectionManager {
 
       // Create MCP client
       const client = new MCPClient({
-        userId: this.userId,
+        identity: this.identity,
         sessionId,
         serverId,
         serverName,
@@ -341,7 +341,7 @@ export class SSEConnectionManager {
     // If client not in memory, try to restore from session
     if (!client) {
       client = new MCPClient({
-        userId: this.userId,
+        identity: this.identity,
         sessionId,
       });
       await client.connect();
@@ -366,7 +366,7 @@ export class SSEConnectionManager {
     // If client not in memory, try to restore from session
     if (!client) {
       client = new MCPClient({
-        userId: this.userId,
+        identity: this.identity,
         sessionId,
       });
       await client.connect();
@@ -387,17 +387,17 @@ export class SSEConnectionManager {
       level: 'debug',
       message: `Starting session refresh for ${sessionId}`,
       timestamp: Date.now(),
-      metadata: { sessionId, userId: this.userId },
+      metadata: { sessionId, identity: this.identity },
     });
 
     // Emit validating state
-    const session = await sessionStore.getSession(this.userId, sessionId);
+    const session = await sessionStore.getSession(this.identity, sessionId);
     if (!session) {
       this.sendEvent({
         level: 'error',
         message: `Session not found: ${sessionId}`,
         timestamp: Date.now(),
-        metadata: { sessionId, userId: this.userId },
+        metadata: { sessionId, identity: this.identity },
       });
       throw new Error('Session not found');
     }
@@ -432,7 +432,7 @@ export class SSEConnectionManager {
 
       // Try to restore and validate
       const client = new MCPClient({
-        userId: this.userId,
+        identity: this.identity,
         sessionId,
         ...clientMetadata, // Include metadata for consistency
       });
@@ -491,10 +491,10 @@ export class SSEConnectionManager {
       level: 'debug',
       message: `Completing OAuth for session ${sessionId}`,
       timestamp: Date.now(),
-      metadata: { sessionId, userId: this.userId },
+      metadata: { sessionId, identity: this.identity },
     });
 
-    const session = await sessionStore.getSession(this.userId, sessionId);
+    const session = await sessionStore.getSession(this.identity, sessionId);
     if (!session) {
       throw new Error('Session not found');
     }
@@ -511,7 +511,7 @@ export class SSEConnectionManager {
 
     try {
       const client = new MCPClient({
-        userId: this.userId,
+        identity: this.identity,
         sessionId,
       });
 
@@ -568,7 +568,7 @@ export class SSEConnectionManager {
 
     if (!client) {
       client = new MCPClient({
-        userId: this.userId,
+        identity: this.identity,
         sessionId,
       });
       await client.connect();
@@ -592,7 +592,7 @@ export class SSEConnectionManager {
 
     if (!client) {
       client = new MCPClient({
-        userId: this.userId,
+        identity: this.identity,
         sessionId,
       });
       await client.connect();
@@ -612,7 +612,7 @@ export class SSEConnectionManager {
 
     if (!client) {
       client = new MCPClient({
-        userId: this.userId,
+        identity: this.identity,
         sessionId,
       });
       await client.connect();
@@ -632,7 +632,7 @@ export class SSEConnectionManager {
 
     if (!client) {
       client = new MCPClient({
-        userId: this.userId,
+        identity: this.identity,
         sessionId,
       });
       await client.connect();

@@ -14,7 +14,7 @@ import { useMcp } from '@mcp-ts/redis/client';
 function MyComponent() {
   const { connections, connect, disconnect, status } = useMcp({
     url: '/api/mcp',
-    userId: 'user-123',
+    identity: 'user-123',
   });
 
   return (
@@ -39,7 +39,7 @@ useMcp({
   url: '/api/mcp',
 
   // Required: User identifier
-  userId: 'user-123',
+  identity: 'user-123',
 
   // Optional: Authentication token
   authToken: 'your-auth-token',
@@ -194,7 +194,7 @@ Handle connection events for custom logic:
 ```typescript
 const { connections } = useMcp({
   url: '/api/mcp',
-  userId: 'user-123',
+  identity: 'user-123',
   onConnectionEvent: (event) => {
     switch (event.type) {
       case 'state_changed':
@@ -230,7 +230,7 @@ const { connections } = useMcp({
 function ToolCaller() {
   const { connections, connect, callTool } = useMcp({
     url: '/api/mcp',
-    userId: 'user-123',
+    identity: 'user-123',
   });
 
   const handleConnect = async () => {
@@ -259,7 +259,7 @@ function ToolCaller() {
 function ConnectionStatus() {
   const { connections, status } = useMcp({
     url: '/api/mcp',
-    userId: 'user-123',
+    identity: 'user-123',
   });
 
   return (
@@ -297,7 +297,7 @@ function ConnectionStatus() {
 function McpWithAuth() {
   const { connect } = useMcp({
     url: '/api/mcp',
-    userId: 'user-123',
+    identity: 'user-123',
     onConnectionEvent: (event) => {
       if (event.type === 'auth_required') {
         // Redirect to OAuth page

@@ -100,7 +100,7 @@ export default function Home(): ReactNode {
 
 const client = new MCPClient({
   serverUrl: 'https://mcp.example.com',
-  userId: 'user-123'
+  identity: 'user-123'
 });
 
 await client.connect();`}
@@ -118,7 +118,7 @@ await client.connect();`}
 function MyComponent() {
   const { connections, connect } = useMcp({
     url: '/api/mcp/sse',
-    userId: 'user-123'
+    identity: 'user-123'
   });
 
   return <div>...</div>;

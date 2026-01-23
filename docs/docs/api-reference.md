@@ -16,15 +16,15 @@ Creates handlers for Next.js App Router API routes.
 import { createNextMcpHandler } from '@mcp-ts/redis/server';
 
 const { GET, POST } = createNextMcpHandler({
-  getUserId: (request) => string,
+  getIdentity: (request) => string,
   getAuthToken?: (request) => string | null,
-  authenticate?: (userId, token) => Promise<boolean>,
+  authenticate?: (identity, token) => Promise<boolean>,
   heartbeatInterval?: number,
 });
 ```
 
 **Options:**
-- `getUserId` - Function to extract user ID from request (required)
+- `getIdentity` - Function to extract identity from request (required)
 - `getAuthToken` - Function to extract auth token from request (optional)
 - `authenticate` - Custom authentication logic (optional)
 - `heartbeatInterval` - SSE heartbeat interval in ms (default: 30000)
@@ -41,14 +41,14 @@ Creates an SSE handler for standard Node.js/Express applications.
 import { createSSEHandler } from '@mcp-ts/redis/server';
 
 const handler = createSSEHandler({
-  userId: string,
-  onAuth?: (userId) => Promise<boolean>,
+  identity: string,
+  onAuth?: (identity) => Promise<boolean>,
   heartbeatInterval?: number,
 });
 ```
 
 **Options:**
-- `userId` - User identifier (required)
+- `identity` - User/Client identifier (required)
 - `onAuth` - Authentication callback (optional)
 - `heartbeatInterval` - Heartbeat interval in ms (default: 30000)
 
@@ -64,7 +64,7 @@ Direct MCP client class for server-side operations.
 import { MCPClient } from '@mcp-ts/redis/server';
 
 const client = new MCPClient({
-  userId: string,
+  identity: string,
   sessionId: string,
   serverId?: string,
   serverUrl?: string,
@@ -195,7 +195,7 @@ Save session data to Redis.
 ```typescript
 await sessionStore.saveSession({
   sessionId: 'abc123',
-  userId: 'user-123',
+  identity: 'user-123',
   serverId: 'server-id',
   serverName: 'My Server',
   serverUrl: 'https://mcp.example.com',
@@ -227,12 +227,12 @@ await sessionStore.deleteSession('abc123');
 
 ---
 
-**`getUserSessions(userId: string): Promise<string[]>`**
+**`getIdentitySessions(identity: string): Promise<string[]>`**
 
-Get all session IDs for a user.
+Get all session IDs for an identity.
 
 ```typescript
-const sessionIds = await sessionStore.getUserSessions('user-123');
+const sessionIds = await sessionStore.getIdentitySessions('user-123');
 ```
 
 ---
@@ -268,7 +268,7 @@ const {
   getTools,
 } = useMcp({
   url: string,
-  userId: string,
+  identity: string,
   authToken?: string,
   autoConnect?: boolean,
   autoInitialize?: boolean,
@@ -279,7 +279,7 @@ const {
 
 **Options:**
 - `url` - SSE endpoint URL (required)
-- `userId` - User identifier (required)
+- `identity` - User/Client identifier (required)
 - `authToken` - Authentication token (optional)
 - `autoConnect` - Auto-connect SSE on mount (default: true)
 - `autoInitialize` - Auto-load sessions on mount (default: true)
@@ -299,7 +299,7 @@ import { SSEClient } from '@mcp-ts/redis/client';
 
 const client = new SSEClient({
   url: string,
-  userId: string,
+  identity: string,
   authToken?: string,
   onConnectionEvent?: (event) => void,
   onStatusChange?: (status) => void,
@@ -437,7 +437,7 @@ interface ToolInfo {
 ```typescript
 interface SessionData {
   sessionId: string;
-  userId: string;
+  identity: string;
   serverId: string;
   serverName: string;
   serverUrl: string;

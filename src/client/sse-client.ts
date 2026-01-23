@@ -14,9 +14,9 @@ export interface SSEClientOptions {
   url: string;
 
   /**
-   * User ID for authentication
+   * User/Client identifier
    */
-  userId: string;
+  identity: string;
 
   /**
    * Optional auth token
@@ -55,7 +55,7 @@ export class SSEClient {
   private connectionPromise: Promise<void> | null = null;
   private connectionResolver: (() => void) | null = null;
 
-  constructor(private options: SSEClientOptions) {}
+  constructor(private options: SSEClientOptions) { }
 
   /**
    * Connect to SSE endpoint
@@ -76,7 +76,7 @@ export class SSEClient {
     // Build URL with query params
     // Handle both relative and absolute URLs
     const url = new URL(this.options.url, typeof window !== 'undefined' ? window.location.origin : undefined);
-    url.searchParams.set('userId', this.options.userId);
+    url.searchParams.set('identity', this.options.identity);
     if (this.options.authToken) {
       url.searchParams.set('token', this.options.authToken);
     }
@@ -199,7 +199,7 @@ export class SSEClient {
     try {
       // Handle both relative and absolute URLs
       const url = new URL(this.options.url, typeof window !== 'undefined' ? window.location.origin : undefined);
-      url.searchParams.set('userId', this.options.userId);
+      url.searchParams.set('identity', this.options.identity);
 
       await fetch(url.toString(), {
         method: 'POST',

@@ -12,7 +12,7 @@ export default function OAuthCallback() {
 
   const { finishAuth } = useMcp({
     url: '/api/mcp',
-    userId: 'demo-user-123',
+    identity: 'demo-user-123',
     authToken: 'demo-auth-token',
     autoConnect: true,
     autoInitialize: false,
@@ -36,7 +36,7 @@ export default function OAuthCallback() {
     }
 
     // Extract sessionId from state parameter
-    // The state should be in format: sessionId or userId:sessionId
+    // The state should be in format: sessionId or identity:sessionId
     const sessionId = state || '';
 
     if (!sessionId) {

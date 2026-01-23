@@ -78,7 +78,7 @@ client.onConnectionEvent((event) => {
 ### Stateless Session Management
 
 All MCP connection state is stored in Redis, allowing serverless functions to:
-1. Create a session with minimal info (userId + sessionId)
+1. Create a session with minimal info (identity + sessionId)
 2. Reconstruct full client state from Redis
 3. Handle requests without in-memory state
 4. Auto-refresh OAuth tokens transparently
@@ -227,7 +227,7 @@ import { createSSEHandler } from '@mcp-ts/redis/server';
 import { createServer } from 'http';
 
 const handler = createSSEHandler({
-  userId: 'user-123', // Get from auth
+  identity: 'user-123', // Get from auth
   heartbeatInterval: 30000,
 });
 
@@ -242,7 +242,7 @@ import { useMcp } from '@mcp-ts/redis/client';
 function MyComponent() {
   const { connections, connect, disconnect, status } = useMcp({
     url: '/api/mcp/sse',
-    userId: 'user-123',
+    identity: 'user-123',
     authToken: 'your-auth-token',
   });
 
@@ -308,7 +308,7 @@ Sessions are stored with the following structure:
 ```json
 {
   "sessionId": "abc123",
-  "userId": "user-123",
+  "identity": "user-123",
   "serverId": "server-xyz",
   "serverName": "Example Server",
   "serverUrl": "https://mcp.example.com",
@@ -324,7 +324,7 @@ Sessions are stored with the following structure:
 }
 ```
 
-**User Sessions Index**: `mcp:user:{userId}:sessions` (set of sessionIds)
+**User Sessions Index**: `mcp:user:{identity}:sessions` (set of sessionIds)
 
 ## Error Handling
 

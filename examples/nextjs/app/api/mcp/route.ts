@@ -8,12 +8,12 @@ export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 export const { GET, POST } = createNextMcpHandler({
-  // Optional: customize how to extract userId and auth token
-  // getUserId: (request) => new URL(request.url).searchParams.get('userId'),
+  // Optional: customize how to extract identity and auth token
+  // getIdentity: (request) => new URL(request.url).searchParams.get('identity'),
   // getAuthToken: (request) => request.headers.get('authorization'),
 
   // Optional: add custom authentication
-  // validateAuth: async (userId, token) => {
+  // validateAuth: async (identity, token) => {
   //   // Verify token with your auth system
   //   return token !== null;
   // },

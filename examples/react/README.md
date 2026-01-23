@@ -136,7 +136,7 @@ const {
   isConnected,     // Whether SSE is connected
 } = useMcp({
   url: '/api/mcp/sse',
-  userId: 'user-123',
+  identity: 'user-123',
   authToken: 'token',
   autoConnect: true,
 });
@@ -179,7 +179,7 @@ Example backend setup (see `examples/server-nextjs` or `examples/server-express`
 import { createSSEHandler } from '@mcp-ts/redis/server';
 
 const handler = createSSEHandler({
-  userId: 'user-123',
+  identity: 'user-123',
   heartbeatInterval: 30000,
 });
 
@@ -200,7 +200,7 @@ Then use them in your app:
 
 ```typescript
 const [sseUrl] = useState(import.meta.env.VITE_SSE_ENDPOINT);
-const [userId] = useState(import.meta.env.VITE_USER_ID);
+const [identity] = useState(import.meta.env.VITE_USER_ID);
 const [authToken] = useState(import.meta.env.VITE_AUTH_TOKEN);
 ```
 

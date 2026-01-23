@@ -82,7 +82,7 @@ async function test() {
   // Test Redis connection
   await sessionStore.saveSession({
     sessionId,
-    userId: 'test-user',
+    identity: 'test-user',
     serverId: 'test-server',
     serverName: 'Test Server',
     serverUrl: 'https://example.com',

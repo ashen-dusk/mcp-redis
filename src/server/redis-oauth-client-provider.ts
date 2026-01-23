@@ -47,7 +47,7 @@ export class RedisOAuthClientProvider implements AgentsOAuthProvider {
 
     /**
      * Creates a new Redis-backed OAuth provider
-     * @param userId - User identifier
+     * @param identity - User/Client identifier
      * @param serverId - Server identifier
      * @param sessionId - Session identifier (used as OAuth state)
      * @param clientName - OAuth client name
@@ -55,7 +55,7 @@ export class RedisOAuthClientProvider implements AgentsOAuthProvider {
      * @param onRedirect - Optional callback when redirect to authorization is needed
      */
     constructor(
-        public userId: string,
+        public identity: string,
         public serverId: string,
         public sessionId: string,
         public clientName: string,
@@ -99,7 +99,7 @@ export class RedisOAuthClientProvider implements AgentsOAuthProvider {
      * @private
      */
     private getSessionKey(): string {
-        return `mcp:session:${this.userId}:${this.sessionId}`;
+        return `mcp:session:${this.identity}:${this.sessionId}`;
     }
 
     /**

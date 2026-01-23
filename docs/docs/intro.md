@@ -40,8 +40,8 @@ export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 export const { GET, POST } = createNextMcpHandler({
-  getUserId: (request) => {
-    return new URL(request.url).searchParams.get('userId');
+  getIdentity: (request) => {
+    return new URL(request.url).searchParams.get('identity');
   },
 });
 ```
@@ -55,7 +55,7 @@ import { useMcp } from '@mcp-ts/redis/client';
 function App() {
   const { connections, connect, status } = useMcp({
     url: '/api/mcp',
-    userId: 'user-123',
+    identity: 'user-123',
   });
 
   return (

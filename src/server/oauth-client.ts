@@ -44,7 +44,7 @@ export interface MCPOAuthClientOptions {
   serverName?: string;
   callbackUrl?: string;
   onRedirect?: (url: string) => void;
-  userId: string;
+  identity: string;
   serverId?: string; // Optional - loaded from session if not provided
   sessionId: string; // Required - primary key for session lookup
   transportType?: TransportType;
@@ -81,7 +81,7 @@ export class MCPClient {
   private client: Client | null = null;
   public oauthProvider: AgentsOAuthProvider | null = null;
   private transport: StreamableHTTPClientTransport | SSEClientTransport | null = null;
-  private userId: string;
+  private identity: string;
   private serverId?: string;
   private sessionId: string;
   private serverName?: string;
@@ -113,7 +113,7 @@ export class MCPClient {
 
   /**
    * Creates a new MCP client instance
-   * Can be initialized with minimal options (userId + sessionId) for session restoration
+   * Can be initialized with minimal options (identity + sessionId) for session restoration
    * @param options - Client configuration options
    */
   constructor(options: MCPOAuthClientOptions) {
@@ -121,7 +121,7 @@ export class MCPClient {
     this.serverName = options.serverName;
     this.callbackUrl = options.callbackUrl;
     this.onRedirect = options.onRedirect;
-    this.userId = options.userId;
+    this.identity = options.identity;
     this.serverId = options.serverId;
     this.sessionId = options.sessionId;
     this.transportType = options.transportType || 'streamable_http';
@@ -240,7 +240,7 @@ export class MCPClient {
 
     if (!this.serverUrl || !this.callbackUrl || !this.serverId) {
       this.emitProgress('Loading configuration from Redis...');
-      const sessionData = await sessionStore.getSession(this.userId, this.sessionId);
+      const sessionData = await sessionStore.getSession(this.identity, this.sessionId);
       if (!sessionData) {
         throw new Error(`Session not found: ${this.sessionId}`);
       }
@@ -295,7 +295,7 @@ export class MCPClient {
       }
 
       this.oauthProvider = new RedisOAuthClientProvider(
-        this.userId,
+        this.identity,
         this.serverId,
         this.sessionId,
         clientMetadata.client_name ?? 'MCP Assistant',
@@ -373,7 +373,7 @@ export class MCPClient {
       serverUrl: this.serverUrl,
       callbackUrl: this.callbackUrl,
       transportType: this.transportType || 'streamable_http',
-      userId: this.userId,
+      identity: this.identity,
       active,
     });
   }
@@ -438,7 +438,7 @@ export class MCPClient {
       this.emitStateChange('CONNECTED');
       this.emitProgress('Connected successfully');
 
-      const existingSession = await sessionStore.getSession(this.userId, this.sessionId);
+      const existingSession = await sessionStore.getSession(this.identity, this.sessionId);
       if (!existingSession) {
         await this.saveSession(true);
       }
@@ -854,7 +854,7 @@ export class MCPClient {
       await (this.oauthProvider as any).invalidateCredentials('all');
     }
 
-    await sessionStore.removeSession(this.userId, this.sessionId);
+    await sessionStore.removeSession(this.identity, this.sessionId);
     this.disconnect();
   }
 
@@ -945,36 +945,36 @@ export class MCPClient {
    * Gets MCP server configuration for all active user sessions
    * Loads sessions from Redis, validates OAuth tokens, refreshes if expired
    * Returns ready-to-use configuration with valid auth headers
-   * @param userId - User ID to fetch sessions for
+   * @param identity - User ID to fetch sessions for
    * @returns Object keyed by sanitized server labels containing transport, url, headers, etc.
    * @static
    */
-  static async getMcpServerConfig(userId: string): Promise<Record<string, any>> {
+  static async getMcpServerConfig(identity: string): Promise<Record<string, any>> {
     const mcpConfig: Record<string, any> = {};
-    const sessionIds = await sessionStore.getUserMcpSessions(userId);
+    const sessionIds = await sessionStore.getIdentityMcpSessions(identity);
 
     for (const sessionId of sessionIds) {
       try {
         // Load session from Redis
-        const sessionData = await sessionStore.getSession(userId, sessionId);
+        const sessionData = await sessionStore.getSession(identity, sessionId);
 
         // Validate session - remove if invalid or inactive
         if (
           !sessionData ||
           !sessionData.active ||
-          !sessionData.userId ||
+          !sessionData.identity ||
           !sessionData.serverId ||
           !sessionData.transportType ||
           !sessionData.serverUrl
         ) {
-          await sessionStore.removeSession(userId, sessionId);
+          await sessionStore.removeSession(identity, sessionId);
           continue;
         }
 
         // Get OAuth headers if session requires authentication
         let headers: Record<string, string> | undefined;
         try {
-          const client = new MCPClient({ userId, sessionId });
+          const client = new MCPClient({ identity, sessionId });
           await client.initialize();
 
           const hasValidTokens = await client.getValidTokens();
@@ -1003,7 +1003,7 @@ export class MCPClient {
           ...(headers && { headers }),
         };
       } catch (error) {
-        await sessionStore.removeSession(userId, sessionId);
+        await sessionStore.removeSession(identity, sessionId);
         console.warn(`[MCP] Failed to process session ${sessionId}:`, error);
       }
     }

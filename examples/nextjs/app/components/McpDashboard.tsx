@@ -5,7 +5,7 @@ import { useMcp } from '@mcp-ts/redis/client';
 import styles from './McpDashboard.module.css';
 
 export default function McpDashboard() {
-  const [userId] = useState('demo-user-123');
+  const [identity] = useState('demo-user-123');
   const [authToken] = useState('demo-auth-token');
 
   const {
@@ -18,7 +18,7 @@ export default function McpDashboard() {
     listTools,
   } = useMcp({
     url: '/api/mcp',
-    userId,
+    identity,
     authToken,
     autoConnect: true,
     autoInitialize: true, // Auto-load sessions on mount

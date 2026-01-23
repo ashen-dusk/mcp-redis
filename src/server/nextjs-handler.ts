@@ -9,9 +9,9 @@ import type { McpRpcResponse } from '../shared/types.js';
 
 export interface NextMcpHandlerOptions {
   /**
-   * Extract userId from request (default: from 'userId' query param)
+   * Extract identity from request (default: from 'identity' query param)
    */
-  getUserId?: (request: Request) => string | null;
+  getIdentity?: (request: Request) => string | null;
 
   /**
    * Extract auth token from request (default: from 'token' query param or Authorization header)
@@ -22,7 +22,7 @@ export interface NextMcpHandlerOptions {
    * Authenticate user and verify access (optional)
    * Return true if user is authenticated, false otherwise
    */
-  authenticate?: (userId: string, token: string | null) => Promise<boolean> | boolean;
+  authenticate?: (identity: string, token: string | null) => Promise<boolean> | boolean;
 
   /**
    * Heartbeat interval in milliseconds (default: 30000)
@@ -59,7 +59,7 @@ const managers = new Map<string, SSEConnectionManager>();
  */
 export function createNextMcpHandler(options: NextMcpHandlerOptions = {}) {
   const {
-    getUserId = (request: Request) => new URL(request.url).searchParams.get('userId'),
+    getIdentity = (request: Request) => new URL(request.url).searchParams.get('identity'),
     getAuthToken = (request: Request) => {
       const url = new URL(request.url);
       return url.searchParams.get('token') || request.headers.get('authorization');
@@ -74,15 +74,15 @@ export function createNextMcpHandler(options: NextMcpHandlerOptions = {}) {
    * GET handler - Establishes SSE connection
    */
   async function GET(request: Request): Promise<Response> {
-    const userId = getUserId(request);
+    const identity = getIdentity(request);
     const authToken = getAuthToken(request);
 
-    if (!userId) {
-      return new Response('Missing userId', { status: 400 });
+    if (!identity) {
+      return new Response('Missing identity', { status: 400 });
     }
 
     // Validate auth
-    const isAuthorized = await authenticate(userId, authToken);
+    const isAuthorized = await authenticate(identity, authToken);
     if (!isAuthorized) {
       return new Response('Unauthorized', { status: 401 });
     }
@@ -104,7 +104,7 @@ export function createNextMcpHandler(options: NextMcpHandlerOptions = {}) {
     sendSSE('connected', { timestamp: Date.now() });
 
     // Clean up previous manager if exists (prevents memory leaks on reconnect)
-    const previousManager = managers.get(userId);
+    const previousManager = managers.get(identity);
     if (previousManager) {
       previousManager.dispose();
     }
@@ -117,7 +117,7 @@ export function createNextMcpHandler(options: NextMcpHandlerOptions = {}) {
     // Create new manager
     const manager = new SSEConnectionManager(
       {
-        userId,
+        identity,
         heartbeatInterval,
         clientDefaults: resolvedClientMetadata, // Pass resolved metadata
       },
@@ -136,13 +136,13 @@ export function createNextMcpHandler(options: NextMcpHandlerOptions = {}) {
       }
     );
 
-    managers.set(userId, manager);
+    managers.set(identity, manager);
 
     // Handle client disconnect
     const abortController = new AbortController();
     request.signal?.addEventListener('abort', () => {
       manager.dispose();
-      managers.delete(userId);
+      managers.delete(identity);
       writer.close().catch(() => { });
       abortController.abort();
     });
@@ -163,15 +163,15 @@ export function createNextMcpHandler(options: NextMcpHandlerOptions = {}) {
    * POST handler - Handles RPC requests
    */
   async function POST(request: Request): Promise<Response> {
-    const userId = getUserId(request);
+    const identity = getIdentity(request);
     const authToken = getAuthToken(request);
 
-    if (!userId) {
-      return Response.json({ error: { code: 'MISSING_USER_ID', message: 'Missing userId' } }, { status: 400 });
+    if (!identity) {
+      return Response.json({ error: { code: 'MISSING_IDENTITY', message: 'Missing identity' } }, { status: 400 });
     }
 
     // Validate auth
-    const isAuthorized = await authenticate(userId, authToken);
+    const isAuthorized = await authenticate(identity, authToken);
     if (!isAuthorized) {
       return Response.json({ error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } }, { status: 401 });
     }
@@ -180,7 +180,7 @@ export function createNextMcpHandler(options: NextMcpHandlerOptions = {}) {
       const body = await request.json();
 
       // Get existing manager (created by GET endpoint)
-      const manager = managers.get(userId);
+      const manager = managers.get(identity);
 
       if (!manager) {
         return Response.json(

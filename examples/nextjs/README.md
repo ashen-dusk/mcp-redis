@@ -101,10 +101,10 @@ import { createSSEHandler } from '@mcp-ts/redis/server';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const userId = searchParams.get('userId');
+  const identity = searchParams.get('identity');
 
   const handler = createSSEHandler({
-    userId,
+    identity,
     heartbeatInterval: 30000,
   });
 
@@ -121,7 +121,7 @@ export async function GET(request: NextRequest) {
 **Key Features:**
 - Real-time event streaming via SSE
 - Automatic heartbeat to keep connection alive
-- User-specific sessions via userId
+- User-specific sessions via identity
 - Redis persistence for session state
 
 ### Client-Side: React Hook (`app/components/McpDashboard.tsx`)
@@ -136,7 +136,7 @@ const {
   disconnect,
 } = useMcp({
   url: '/api/mcp',
-  userId: 'demo-user-123',
+  identity: 'demo-user-123',
   authToken: 'your-auth-token',
   autoConnect: true,
 });
