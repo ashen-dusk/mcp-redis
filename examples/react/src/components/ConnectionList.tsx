@@ -1,4 +1,4 @@
-import type { McpConnection, ToolInfo } from '@mcp-assistant/mcp-redis/shared';
+import type { McpConnection, ToolInfo } from '@mcp-ts/redis/shared';
 import ConnectionCard from './ConnectionCard';
 
 interface ConnectionListProps {

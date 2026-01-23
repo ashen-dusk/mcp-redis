@@ -4,9 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) and other AI assista
 
 ## Package Overview
 
-`@mcp-assistant/mcp-redis` is an npm package that provides Redis-backed MCP (Model Context Protocol) client functionality with OAuth 2.0 authentication and real-time SSE (Server-Sent Events) connections. It's designed for serverless environments and follows the Cloudflare agents pattern for observable state management.
+`@mcp-ts/redis` is an npm package that provides Redis-backed MCP (Model Context Protocol) client functionality with OAuth 2.0 authentication and real-time SSE (Server-Sent Events) connections. It's designed for serverless environments and follows the Cloudflare agents pattern for observable state management.
 
-## Recent Changes (v1.0.0-beta.2+)
+## Recent Changes (v1.0.0-beta.3+)
+
+### Breaking Changes
+- **Package Renamed**: `@mcp-assistant/mcp-redis` -> `@mcp-ts/redis`
+- **Updated Imports**: All imports should now use `@mcp-ts/redis`
 
 ### API Improvements
 - **Renamed `validateAuth` → `authenticate`**: More conventional naming following industry standards
@@ -84,13 +88,13 @@ All MCP connection state is stored in Redis, allowing serverless functions to:
 The package supports both server and client usage:
 ```typescript
 // Server-side (Node.js)
-import { MCPClient, sessionStore, createSSEHandler } from '@mcp-assistant/mcp-redis/server';
+import { MCPClient, sessionStore, createSSEHandler } from '@mcp-ts/redis/server';
 
 // Client-side (React/Browser)
-import { useMcp, SSEClient } from '@mcp-assistant/mcp-redis/client';
+import { useMcp, SSEClient } from '@mcp-ts/redis/client';
 
 // Shared utilities
-import { McpConnectionState, ToolInfo } from '@mcp-assistant/mcp-redis/shared';
+import { McpConnectionState, ToolInfo } from '@mcp-ts/redis/shared';
 ```
 
 ## Common Development Tasks
@@ -211,7 +215,7 @@ npm run dev
 # Test in a local project
 npm link
 cd ../your-project
-npm link @mcp-assistant/mcp-redis
+npm link @mcp-ts/redis
 ```
 
 ## Integration Examples
@@ -219,7 +223,7 @@ npm link @mcp-assistant/mcp-redis
 ### Server-Side: Create SSE Endpoint
 
 ```typescript
-import { createSSEHandler } from '@mcp-assistant/mcp-redis/server';
+import { createSSEHandler } from '@mcp-ts/redis/server';
 import { createServer } from 'http';
 
 const handler = createSSEHandler({
@@ -233,7 +237,7 @@ createServer(handler).listen(3000);
 ### Client-Side: React Hook Usage
 
 ```typescript
-import { useMcp } from '@mcp-assistant/mcp-redis/client';
+import { useMcp } from '@mcp-ts/redis/client';
 
 function MyComponent() {
   const { connections, connect, disconnect, status } = useMcp({
@@ -338,16 +342,16 @@ The package is fully typed with TypeScript. Key type exports:
 
 ```typescript
 // Connection events
-import type { McpConnectionEvent, McpConnectionState } from '@mcp-assistant/mcp-redis/shared';
+import type { McpConnectionEvent, McpConnectionState } from '@mcp-ts/redis/shared';
 
 // RPC types
-import type { McpRpcRequest, McpRpcResponse } from '@mcp-assistant/mcp-redis/shared';
+import type { McpRpcRequest, McpRpcResponse } from '@mcp-ts/redis/shared';
 
 // Tool info
-import type { ToolInfo } from '@mcp-assistant/mcp-redis/shared';
+import type { ToolInfo } from '@mcp-ts/redis/shared';
 
 // OAuth types (re-exported from MCP SDK)
-import type { OAuthTokens, OAuthClientInformation } from '@mcp-assistant/mcp-redis/server';
+import type { OAuthTokens, OAuthClientInformation } from '@mcp-ts/redis/server';
 ```
 
 ## Best Practices

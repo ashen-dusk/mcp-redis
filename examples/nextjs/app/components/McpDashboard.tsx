@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useMcp } from '@mcp-assistant/mcp-redis/client';
+import { useMcp } from '@mcp-ts/redis/client';
 import styles from './McpDashboard.module.css';
 
 export default function McpDashboard() {
@@ -290,7 +290,7 @@ export default function McpDashboard() {
         <section className={`${styles.card} ${styles.infoCard}`}>
           <h2>About This Example</h2>
           <p>
-            This example demonstrates how to use <code>@mcp-assistant/mcp-redis</code> in a Next.js application.
+            This example demonstrates how to use <code>@mcp-ts/redis</code> in a Next.js application.
           </p>
           <h3>Features</h3>
           <ul>

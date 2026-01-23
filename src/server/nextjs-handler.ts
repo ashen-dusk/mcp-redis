@@ -39,7 +39,7 @@ const managers = new Map<string, SSEConnectionManager>();
  * @example
  * ```typescript
  * // app/api/mcp/route.ts
- * import { createNextMcpHandler } from '@mcp-assistant/mcp-redis/server';
+ * import { createNextMcpHandler } from '@mcp-ts/redis/server';
  *
  * export const { GET, POST } = createNextMcpHandler();
  * ```
@@ -122,7 +122,7 @@ export function createNextMcpHandler(options: NextMcpHandlerOptions = {}) {
     request.signal?.addEventListener('abort', () => {
       manager.dispose();
       managers.delete(userId);
-      writer.close().catch(() => {});
+      writer.close().catch(() => { });
       abortController.abort();
     });
 

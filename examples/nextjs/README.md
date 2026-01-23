@@ -1,6 +1,6 @@
 # MCP Redis - Next.js Full-Stack Example
 
-This example demonstrates a complete full-stack implementation of `@mcp-assistant/mcp-redis` in a Next.js application, including both server-side SSE handling and client-side React integration.
+This example demonstrates a complete full-stack implementation of `@mcp-ts/redis` in a Next.js application, including both server-side SSE handling and client-side React integration.
 
 ## What This Example Shows
 
@@ -71,7 +71,7 @@ examples/nextjs/
    REDIS_URL=redis://localhost:6379
    ```
 
-**Note**: The example is configured to use the local package via `"@mcp-assistant/mcp-redis": "file:../.."` in package.json. Whenever you make changes to the main package, rebuild it before testing.
+**Note**: The example is configured to use the local package via `"@mcp-ts/redis": "file:../.."` in package.json. Whenever you make changes to the main package, rebuild it before testing.
 
 ## Running the Example
 
@@ -97,7 +97,7 @@ npm start
 The API route handles both SSE connections and RPC requests:
 
 ```typescript
-import { createSSEHandler } from '@mcp-assistant/mcp-redis/server';
+import { createSSEHandler } from '@mcp-ts/redis/server';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -356,11 +356,11 @@ Connections progress through these states:
 
 ### Build Errors
 
-**Error**: `Module not found: @mcp-assistant/mcp-redis`
+**Error**: `Module not found: @mcp-ts/redis`
 
 **Solution**:
 ```bash
-npm install @mcp-assistant/mcp-redis
+npm install @mcp-ts/redis
 ```
 
 **Error**: TypeScript errors

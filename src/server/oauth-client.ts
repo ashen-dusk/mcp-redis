@@ -301,7 +301,7 @@ export class MCPClient {
     if (!this.client) {
       this.client = new Client(
         {
-          name: 'mcp-assistant-oauth-client',
+          name: 'mcp-ts-oauth-client',
           version: '2.0',
         },
         { capabilities: {} }
@@ -539,7 +539,7 @@ export class MCPClient {
 
       this.client = new Client(
         {
-          name: 'mcp-assistant-oauth-client',
+          name: 'mcp-ts-oauth-client',
           version: '2.0',
         },
         { capabilities: {} }
@@ -803,7 +803,7 @@ export class MCPClient {
 
     this.client = new Client(
       {
-        name: 'mcp-assistant-oauth-client',
+        name: 'mcp-ts-oauth-client',
         version: '2.0',
       },
       { capabilities: {} }

@@ -1,8 +1,8 @@
-# @mcp-assistant/mcp-redis
+# @mcp-ts/redis
 
 Redis-backed MCP (Model Context Protocol) client with OAuth 2.0 and real-time SSE connections for serverless environments.
 
-[![npm version](https://badge.fury.io/js/@mcp-assistant%2Fmcp-redis.svg)](https://www.npmjs.com/package/@mcp-assistant/mcp-redis)
+[![npm version](https://badge.fury.io/js/@mcp-ts%2Fredis.svg)](https://www.npmjs.com/package/@mcp-ts/redis)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Features
@@ -20,11 +20,11 @@ Redis-backed MCP (Model Context Protocol) client with OAuth 2.0 and real-time SS
 ## Installation
 
 ```bash
-npm install @mcp-assistant/mcp-redis
+npm install @mcp-ts/redis
 # or
-yarn add @mcp-assistant/mcp-redis
+yarn add @mcp-ts/redis
 # or
-pnpm add @mcp-assistant/mcp-redis
+pnpm add @mcp-ts/redis
 ```
 
 ## Quick Start
@@ -32,7 +32,7 @@ pnpm add @mcp-assistant/mcp-redis
 ### Server-Side: Create SSE Endpoint
 
 ```typescript
-import { createSSEHandler } from '@mcp-assistant/mcp-redis/server';
+import { createSSEHandler } from '@mcp-ts/redis/server';
 import { createServer } from 'http';
 
 // Create SSE handler for real-time MCP connections
@@ -49,7 +49,7 @@ console.log('SSE endpoint running on http://localhost:3000');
 ### Client-Side: React Hook
 
 ```typescript
-import { useMcp } from '@mcp-assistant/mcp-redis/client';
+import { useMcp } from '@mcp-ts/redis/client';
 
 function MyComponent() {
   const {
@@ -147,7 +147,7 @@ Unlike WebSocket-based systems, this package uses **Server-Sent Events (SSE)**:
 ### Package Structure
 
 ```
-@mcp-assistant/mcp-redis
+@mcp-ts/redis
 ├── /server       # Node.js server-side
 │   ├── MCPClient
 │   ├── SessionStore
@@ -170,7 +170,7 @@ Unlike WebSocket-based systems, this package uses **Server-Sent Events (SSE)**:
 
 **Next.js API Route** (`pages/api/mcp/sse.ts`):
 ```typescript
-import { createSSEHandler } from '@mcp-assistant/mcp-redis/server';
+import { createSSEHandler } from '@mcp-ts/redis/server';
 import { NextApiRequest, NextApiResponse } from 'next';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -191,7 +191,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 **Express Server**:
 ```typescript
 import express from 'express';
-import { createSSEHandler } from '@mcp-assistant/mcp-redis/server';
+import { createSSEHandler } from '@mcp-ts/redis/server';
 
 const app = express();
 
@@ -208,7 +208,7 @@ app.listen(3000);
 #### Using MCPClient Directly
 
 ```typescript
-import { MCPClient, sessionStore } from '@mcp-assistant/mcp-redis/server';
+import { MCPClient, sessionStore } from '@mcp-ts/redis/server';
 
 // Generate session ID
 const sessionId = sessionStore.generateSessionId();
@@ -249,7 +249,7 @@ try {
 #### OAuth Callback Handler
 
 ```typescript
-import { MCPClient } from '@mcp-assistant/mcp-redis/server';
+import { MCPClient } from '@mcp-ts/redis/server';
 
 export async function handleOAuthCallback(code: string, state: string) {
   // state contains sessionId and other metadata
@@ -275,7 +275,7 @@ export async function handleOAuthCallback(code: string, state: string) {
 #### useMcp Hook
 
 ```typescript
-import { useMcp } from '@mcp-assistant/mcp-redis/client';
+import { useMcp } from '@mcp-ts/redis/client';
 
 const {
   // State
@@ -328,7 +328,7 @@ const {
 #### SSEClient (Lower-Level)
 
 ```typescript
-import { SSEClient } from '@mcp-assistant/mcp-redis/client';
+import { SSEClient } from '@mcp-ts/redis/client';
 
 const client = new SSEClient({
   url: '/api/mcp/sse',
@@ -401,7 +401,7 @@ Once connected to an MCP server, you can call tools using the `callTool` method.
 #### Using the useMcp Hook
 
 ```typescript
-import { useMcp } from '@mcp-assistant/mcp-redis/client';
+import { useMcp } from '@mcp-ts/redis/client';
 
 function ToolCaller() {
   const { connections, callTool } = useMcp({
@@ -718,22 +718,22 @@ import type {
   McpConnectionEvent,
   McpConnectionState,
   McpObservabilityEvent,
-} from '@mcp-assistant/mcp-redis/shared';
+} from '@mcp-ts/redis/shared';
 
 // Tool information
-import type { ToolInfo } from '@mcp-assistant/mcp-redis/shared';
+import type { ToolInfo } from '@mcp-ts/redis/shared';
 
 // RPC types
 import type {
   McpRpcRequest,
   McpRpcResponse,
-} from '@mcp-assistant/mcp-redis/shared';
+} from '@mcp-ts/redis/shared';
 
 // OAuth types (from MCP SDK)
 import type {
   OAuthTokens,
   OAuthClientInformation,
-} from '@mcp-assistant/mcp-redis/server';
+} from '@mcp-ts/redis/server';
 ```
 
 ## Examples
@@ -742,7 +742,7 @@ import type {
 
 ```typescript
 // app/api/mcp/route.ts
-import { createNextMcpHandler } from '@mcp-assistant/mcp-redis/server';
+import { createNextMcpHandler } from '@mcp-ts/redis/server';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -773,7 +773,7 @@ export const { GET, POST } = createNextMcpHandler({
 // app/components/McpConnections.tsx
 'use client';
 
-import { useMcp } from '@mcp-assistant/mcp-redis/client';
+import { useMcp } from '@mcp-ts/redis/client';
 
 export function McpConnections({ userId }: { userId: string }) {
   const { connections, connect, disconnect, status } = useMcp({
@@ -799,7 +799,7 @@ export function McpConnections({ userId }: { userId: string }) {
 ## Error Handling
 
 ```typescript
-import { UnauthorizedError } from '@mcp-assistant/mcp-redis/server';
+import { UnauthorizedError } from '@mcp-ts/redis/server';
 
 try {
   await client.connect();
@@ -863,7 +863,7 @@ This library was developed with assistance from Claude (Anthropic's AI assistant
 
 ## Links
 
-- [npm Package](https://www.npmjs.com/package/@mcp-assistant/mcp-redis)
+- [npm Package](https://www.npmjs.com/package/@mcp-ts/redis)
 - [GitHub Repository](https://github.com/yourusername/mcp-redis)
 - [Issues](https://github.com/yourusername/mcp-redis/issues)
 - [MCP Protocol](https://modelcontextprotocol.io)

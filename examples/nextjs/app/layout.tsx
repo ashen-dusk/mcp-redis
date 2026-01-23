@@ -3,7 +3,7 @@ import './globals.css'
 
 export const metadata: Metadata = {
   title: 'MCP Redis Next.js Example',
-  description: 'Example application demonstrating @mcp-assistant/mcp-redis with Next.js',
+  description: 'Example application demonstrating @mcp-ts/redis with Next.js',
 }
 
 export default function RootLayout({
