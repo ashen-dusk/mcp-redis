@@ -1,0 +1,108 @@
+.terminal {
+    background-color: #0d0d0e;
+    border-radius: 12px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+    font-family: 'SF Mono', Monaco, Menlo, Consolas, 'Ubuntu Mono', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    text-align: left;
+}
+
+.header {
+    background-color: rgba(255, 255, 255, 0.05);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.controls {
+    display: flex;
+    gap: 8px;
+}
+
+.control {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.close {
+    background-color: #ff5f56;
+}
+
+.minimize {
+    background-color: #ffbd2e;
+}
+
+.maximize {
+    background-color: #27c93f;
+}
+
+.content {
+    padding: 24px;
+    color: #e0e0e0;
+    min-height: 300px;
+}
+
+.line {
+    margin-bottom: 8px;
+    display: flex;
+    opacity: 0;
+    animation: fadeIn 0.3s forwards;
+}
+
+.command {
+    color: #fff;
+    font-weight: 600;
+}
+
+.command::before {
+    content: '$ ';
+    color: #666;
+    margin-right: 8px;
+}
+
+.output {
+    color: #a0a0a0;
+}
+
+.success {
+    color: #4ade80;
+}
+
+.success::before {
+    margin-right: 8px;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(2px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.cursor {
+    display: inline-block;
+    width: 8px;
+    height: 15px;
+    background-color: #fff;
+    animation: blink 1s step-end infinite;
+    vertical-align: middle;
+    margin-left: 4px;
+}
+
+@keyframes blink {
+    50% {
+        opacity: 0;
+    }
+}

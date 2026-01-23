@@ -19,7 +19,7 @@ Before installing, ensure you have:
 Choose your preferred package manager:
 
 ```bash npm2yarn
-npm install @mcp-assistant/mcp-redis
+npm install @mcp-ts/redis
 ```
 
 ## Setup Redis
@@ -73,7 +73,7 @@ Test your setup with a simple script:
 
 ```typescript
 // test-mcp.ts
-import { sessionStore } from '@mcp-assistant/mcp-redis/server';
+import { sessionStore } from '@mcp-ts/redis/server';
 
 async function test() {
   const sessionId = sessionStore.generateSessionId();
@@ -121,9 +121,9 @@ If using TypeScript, ensure your `tsconfig.json` includes:
 
 ## Next Steps
 
-- [Next.js Integration](/nextjs) - Set up with Next.js
-- [React Hook](/react-hook) - Use the React hook
-- [API Reference](/api-reference) - Explore the API
+- [Next.js Integration](./nextjs.md) - Set up with Next.js
+- [React Hook](./react-hook.md) - Use the React hook
+- [API Reference](./api-reference.md) - Explore the API
 
 ## Troubleshooting
 
@@ -138,9 +138,9 @@ If using TypeScript, ensure your `tsconfig.json` includes:
 
 ### Module Resolution Errors
 
-**Problem**: `Cannot find module '@mcp-assistant/mcp-redis/server'`
+**Problem**: `Cannot find module '@mcp-ts/redis/server'`
 
 **Solution**:
 - Clear node_modules: `rm -rf node_modules && npm install`
 - Check TypeScript configuration
-- Update to latest version: `npm update @mcp-assistant/mcp-redis`
+- Update to latest version: `npm update @mcp-ts/redis`

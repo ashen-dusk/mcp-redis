@@ -13,7 +13,7 @@ Complete guide for integrating mcp-redis with Next.js applications (App Router a
 Create an API route handler at `app/api/mcp/route.ts`:
 
 ```typescript
-import { createNextMcpHandler } from '@mcp-assistant/mcp-redis/server';
+import { createNextMcpHandler } from '@mcp-ts/redis/server';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -42,7 +42,7 @@ Create a component at `components/McpConnections.tsx`:
 ```typescript
 'use client';
 
-import { useMcp } from '@mcp-assistant/mcp-redis/client';
+import { useMcp } from '@mcp-ts/redis/client';
 
 export function McpConnections({ userId }: { userId: string }) {
   const {
@@ -131,7 +131,7 @@ export default function Home() {
 Create `pages/api/mcp/sse.ts`:
 
 ```typescript
-import { createSSEHandler } from '@mcp-assistant/mcp-redis/server';
+import { createSSEHandler } from '@mcp-ts/redis/server';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 export default async function handler(
@@ -183,7 +183,7 @@ Handle OAuth callbacks at `app/oauth/callback/page.tsx`:
 
 import { useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useMcp } from '@mcp-assistant/mcp-redis/client';
+import { useMcp } from '@mcp-ts/redis/client';
 
 export default function OAuthCallback() {
   const searchParams = useSearchParams();
@@ -248,7 +248,7 @@ Ensure your platform supports:
 Here's a full working example:
 
 ```typescript title="app/api/mcp/route.ts"
-import { createNextMcpHandler } from '@mcp-assistant/mcp-redis/server';
+import { createNextMcpHandler } from '@mcp-ts/redis/server';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -265,7 +265,7 @@ export const { GET, POST } = createNextMcpHandler({
 ```typescript title="components/McpClient.tsx"
 'use client';
 
-import { useMcp } from '@mcp-assistant/mcp-redis/client';
+import { useMcp } from '@mcp-ts/redis/client';
 import { useState } from 'react';
 
 export function McpClient({ userId }: { userId: string }) {
@@ -316,6 +316,6 @@ export function McpClient({ userId }: { userId: string }) {
 
 ## Next Steps
 
-- [React Hook API](/react-hook) - Detailed hook documentation
-- [API Reference](/api-reference) - Complete API reference
-- [Examples](/examples) - More code examples
+- [React Hook API](./react-hook.md) - Detailed hook documentation
+- [API Reference](./api-reference.md) - Complete API reference
+- [Examples](https://github.com/ashen-dusk/mcp-redis/tree/main/examples) - More code examples

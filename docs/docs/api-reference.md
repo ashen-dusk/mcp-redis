@@ -13,7 +13,7 @@ Complete API documentation for mcp-redis.
 Creates handlers for Next.js App Router API routes.
 
 ```typescript
-import { createNextMcpHandler } from '@mcp-assistant/mcp-redis/server';
+import { createNextMcpHandler } from '@mcp-ts/redis/server';
 
 const { GET, POST } = createNextMcpHandler({
   getUserId: (request) => string,
@@ -38,7 +38,7 @@ const { GET, POST } = createNextMcpHandler({
 Creates an SSE handler for standard Node.js/Express applications.
 
 ```typescript
-import { createSSEHandler } from '@mcp-assistant/mcp-redis/server';
+import { createSSEHandler } from '@mcp-ts/redis/server';
 
 const handler = createSSEHandler({
   userId: string,
@@ -61,7 +61,7 @@ const handler = createSSEHandler({
 Direct MCP client class for server-side operations.
 
 ```typescript
-import { MCPClient } from '@mcp-assistant/mcp-redis/server';
+import { MCPClient } from '@mcp-ts/redis/server';
 
 const client = new MCPClient({
   userId: string,
@@ -175,7 +175,7 @@ await client.finishAuth(authCode);
 Redis-backed session storage utilities.
 
 ```typescript
-import { sessionStore } from '@mcp-assistant/mcp-redis/server';
+import { sessionStore } from '@mcp-ts/redis/server';
 ```
 
 **`generateSessionId(): string`**
@@ -244,7 +244,7 @@ const sessionIds = await sessionStore.getUserSessions('user-123');
 React hook for managing MCP connections.
 
 ```typescript
-import { useMcp } from '@mcp-assistant/mcp-redis/client';
+import { useMcp } from '@mcp-ts/redis/client';
 
 const {
   connections,
@@ -295,7 +295,7 @@ const {
 Lower-level SSE client for custom implementations.
 
 ```typescript
-import { SSEClient } from '@mcp-assistant/mcp-redis/client';
+import { SSEClient } from '@mcp-ts/redis/client';
 
 const client = new SSEClient({
   url: string,
@@ -394,7 +394,7 @@ const tools = await client.listTools(sessionId);
 import type {
   McpConnectionState,
   McpConnectionEvent,
-} from '@mcp-assistant/mcp-redis/shared';
+} from '@mcp-ts/redis/shared';
 
 type McpConnectionState =
   | 'DISCONNECTED'
@@ -419,7 +419,7 @@ type McpConnectionEvent =
 ### Tool Types
 
 ```typescript
-import type { ToolInfo } from '@mcp-assistant/mcp-redis/shared';
+import type { ToolInfo } from '@mcp-ts/redis/shared';
 
 interface ToolInfo {
   name: string;
@@ -456,7 +456,7 @@ interface SessionData {
 Thrown when OAuth authorization is required.
 
 ```typescript
-import { UnauthorizedError } from '@mcp-assistant/mcp-redis/server';
+import { UnauthorizedError } from '@mcp-ts/redis/server';
 
 try {
   await client.connect();
@@ -469,5 +469,5 @@ try {
 
 ## Next Steps
 
-- [Examples](/examples) - Practical code examples
+- [Examples](https://github.com/ashen-dusk/mcp-redis/tree/main/examples) - Practical code examples
 - [GitHub Repository](https://github.com/ashen-dusk/mcp-redis) - Source code

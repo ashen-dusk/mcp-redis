@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { McpConnection, ToolInfo } from '@mcp-assistant/mcp-redis/shared';
+import type { McpConnection, ToolInfo } from '@mcp-ts/redis/shared';
 import ToolList from './ToolList';
 
 interface ConnectionCardProps {

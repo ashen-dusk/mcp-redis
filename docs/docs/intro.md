@@ -25,7 +25,7 @@ slug: /
 ## Quick Install
 
 ```bash
-npm install @mcp-assistant/mcp-redis
+npm install @mcp-ts/redis
 ```
 
 ## Basic Example
@@ -34,7 +34,7 @@ npm install @mcp-assistant/mcp-redis
 
 ```typescript
 // app/api/mcp/route.ts
-import { createNextMcpHandler } from '@mcp-assistant/mcp-redis/server';
+import { createNextMcpHandler } from '@mcp-ts/redis/server';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -50,7 +50,7 @@ export const { GET, POST } = createNextMcpHandler({
 
 ```typescript
 'use client';
-import { useMcp } from '@mcp-assistant/mcp-redis/client';
+import { useMcp } from '@mcp-ts/redis/client';
 
 function App() {
   const { connections, connect, status } = useMcp({
@@ -86,7 +86,7 @@ function App() {
 
 Get started with these guides:
 
-- **[Installation](/installation)** - Detailed setup instructions
-- **[Next.js Integration](/nextjs)** - Complete Next.js example
-- **[React Hook](/react-hook)** - Using the useMcp hook
-- **[API Reference](/api-reference)** - Full API documentation
+- **[Installation](./installation.md)** - Detailed setup instructions
+- **[Next.js Integration](./nextjs.md)** - Complete Next.js example
+- **[React Hook](./react-hook.md)** - Using the useMcp hook
+- **[API Reference](./api-reference.md)** - Full API documentation

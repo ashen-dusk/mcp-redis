@@ -1,6 +1,6 @@
 # MCP Redis - React Example
 
-This example demonstrates how to use `@mcp-assistant/mcp-redis` in a React application with TypeScript.
+This example demonstrates how to use `@mcp-ts/redis` in a React application with TypeScript.
 
 ## What This Example Shows
 
@@ -125,7 +125,7 @@ Click the "Disconnect" button on any connection to close it.
 The main hook for managing MCP connections:
 
 ```typescript
-import { useMcp } from '@mcp-assistant/mcp-redis/client';
+import { useMcp } from '@mcp-ts/redis/client';
 
 const {
   connections,      // Array of active connections
@@ -176,7 +176,7 @@ This example requires a backend that implements:
 Example backend setup (see `examples/server-nextjs` or `examples/server-express`):
 
 ```typescript
-import { createSSEHandler } from '@mcp-assistant/mcp-redis/server';
+import { createSSEHandler } from '@mcp-ts/redis/server';
 
 const handler = createSSEHandler({
   userId: 'user-123',
