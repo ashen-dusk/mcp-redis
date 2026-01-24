@@ -231,6 +231,16 @@ export class SSEConnectionManager {
   private async connect(params: ConnectParams): Promise<ConnectResult> {
     const { serverId, serverName, serverUrl, callbackUrl, transportType } = params;
 
+    // Check for existing connections
+    const existingSessions = await sessionStore.getIdentitySessionsData(this.identity);
+    const duplicate = existingSessions.find(s =>
+      s.serverId === serverId || s.serverUrl === serverUrl
+    );
+
+    if (duplicate) {
+      throw new Error(`Connection already exists for server: ${duplicate.serverUrl || duplicate.serverId} (${duplicate.serverName})`);
+    }
+
     // Generate session ID
     const sessionId = sessionStore.generateSessionId();
 
