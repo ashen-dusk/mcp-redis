@@ -104,8 +104,6 @@ export class StorageOAuthClientProvider implements AgentsOAuthProvider {
      * @throws Error if session doesn't exist (session must be created by controller layer)
      */
     private async saveSessionData(data: Partial<SessionData>): Promise<void> {
-        // OAuth provider should ONLY update existing sessions
-        // Session creation is the responsibility of the controller (sse-handler)
         await storage.updateSession(this.identity, this.sessionId, data);
     }
 
@@ -139,30 +137,8 @@ export class StorageOAuthClientProvider implements AgentsOAuthProvider {
     async saveTokens(tokens: OAuthTokens): Promise<void> {
         const data: Partial<SessionData> = { tokens };
 
-        // Note: SessionData interface defines `tokens` but not `tokenExpiresAt` as a top-level field 
-        // in my previous view of types.ts? 
-        // Let me double check types.ts content I wrote.
-        // I see `tokens?: OAuthTokens`.
-        // I do NOT see `tokenExpiresAt` in `SessionData`.
-        // But `RedisOAuthClientProvider` was saving it?
-        // `RedisOAuthClientProvider` merged data into a JSON object. 
-        // `SessionData` in `types.ts` is strict.
-
-        // If I want to store expiry, I should rely on `tokens.expires_in`.
-        // But `isTokenExpired` needs a stored timestamp.
-        // I should probably add `tokenExpiresAt` to `SessionData` interface if needed.
-        // OR rely on in-memory `this.tokenExpiresAt` if it persists? (No, provider is recreated).
-
-        // I will add `tokenExpiresAt` to SessionData in types.ts later if needed. 
-        // For now, I'll calculate it in-memory or rely on `tokens` object if it had it? 
-        // OAuthTokens usually has `expires_in` (seconds).
-
         if (tokens.expires_in) {
             this.tokenExpiresAt = Date.now() + (tokens.expires_in * 1000) - TOKEN_EXPIRY_BUFFER_MS;
-            // We need to persist this if we want checkState to be robust across restarts.
-            // But SessionData currently doesn't have it.
-            // I will assume for now I can only store what matches SessionData.
-            // Or I should add it to SessionData.
         }
 
         await this.saveSessionData(data);
@@ -207,14 +183,6 @@ export class StorageOAuthClientProvider implements AgentsOAuthProvider {
             // Create a copy to modify
             const updates: Partial<SessionData> = {};
 
-            // We need to "unset" fields. 
-            // setClient merges... so passing undefined might not work if logic is {...current, ...data}.
-            // setClient implementation in backends:
-            // const sessionData = { ...existing, ...options };
-            // So if we pass undefined, it overrides? 
-            // `...{ clientInformation: undefined }` overrides `clientInformation: existing`.
-            // Yes.
-
             if (scope === "client") {
                 updates.clientInformation = undefined;
                 updates.clientId = undefined;
@@ -255,20 +223,10 @@ export class StorageOAuthClientProvider implements AgentsOAuthProvider {
             this._clientId = data.clientId;
         }
 
-        // If we want to restore expiresAt:
-        // if (data.tokens && data.tokens.expires_in) ...
-        // But we didn't store the computed timestamp.
-        // We can recompute it from `createdAt` + `expires_in`? No, `expires_in` is duration from grant.
-        // We really should store `tokenExpiresAt`. 
-
         return data.tokens;
     }
 
     isTokenExpired(): boolean {
-        // Without persistent `tokenExpiresAt`, this relies on in-memory state.
-        // This works if the provider instance stays alive.
-        // For serverless/restart, we lose this optimization and might reuse expired token 
-        // until server rejects it (refresh).
         if (!this.tokenExpiresAt) {
             return false;
         }

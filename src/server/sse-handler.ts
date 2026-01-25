@@ -309,9 +309,6 @@ export class SSEConnectionManager {
       // Attempt connection
       await client.connect();
 
-      // Emit connected state - Handled by client event
-
-
       // Fetch tools
       const tools = await client.listTools();
 

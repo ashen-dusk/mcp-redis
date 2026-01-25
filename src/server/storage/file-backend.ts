@@ -49,9 +49,6 @@ export class FileStorageBackend implements StorageBackend {
 
             this.memoryCache = new Map();
             if (Array.isArray(json)) {
-                // Legacy / simple format if any
-                // but we likely store object keyed by sessionId? 
-                // Let's assume we store an array of SessionData for simplicity in JSON
                 json.forEach((s: SessionData) => {
                     this.memoryCache!.set(this.getSessionKey(s.identity || 'unknown', s.sessionId), s);
                 });

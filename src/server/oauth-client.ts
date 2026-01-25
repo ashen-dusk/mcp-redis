@@ -522,10 +522,6 @@ export class MCPClient {
         { capabilities: {} }
       );
 
-      // Now connect using the standard flow (which handles fallbacks/retries if needed)
-      // Note: We might need to be careful here. standard 'connect' might re-initialize transport.
-      // But since we just auth'd, we should be good to go.
-
       this.emitStateChange('CONNECTING');
 
       // We explicitly try to connect with the transport we just auth'd with first
