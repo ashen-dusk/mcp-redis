@@ -66,7 +66,7 @@ export interface MCPOAuthClientOptions {
 }
 
 /**
- * MCP Client with OAuth 2.0 authentication support
+ * MCP Client with OAuth 2.1 authentication support
  * Manages connections to MCP servers with automatic token refresh and session restoration
  * Emits connection lifecycle events for observability
  */
@@ -231,6 +231,22 @@ export class MCPClient {
     const transportOptions = {
       authProvider: this.oauthProvider!,
       ...(this.headers && { headers: this.headers }),
+      /**
+       * Custom fetch implementation to handle connection timeouts.
+       * Observation: SDK 1.24.0+ connections may hang indefinitely in some environments.
+       * This wrapper enforces a timeout and properly uses AbortController to unblock the request.
+       */
+      fetch: (url: RequestInfo | URL, init?: RequestInit) => {
+        const timeout = 30000;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeout);
+        const signal = init?.signal ?
+          // @ts-ignore: AbortSignal.any is available in Node 20+
+          (AbortSignal.any ? AbortSignal.any([init.signal, controller.signal]) : controller.signal) :
+          controller.signal;
+
+        return fetch(url, { ...init, signal }).finally(() => clearTimeout(timeoutId));
+      }
     };
 
     if (type === 'sse') {
@@ -366,6 +382,7 @@ export class MCPClient {
         // Update local state with the transport we are about to try
         this.transport = transport;
 
+        // Race connection against timeout
         await this.client!.connect(transport);
 
         // Success! Return the type that worked

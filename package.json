@@ -4,7 +4,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "description": "Redis-backed MCP (Model Context Protocol) client with OAuth 2.0 and real-time SSE connections for serverless environments",
+  "description": "A Lightweight MCP (Model Context Protocol) client library for JavaScript applications, supporting multiple storage backends and real-time SSE support.",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -87,7 +87,7 @@
     }
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "1.23.0",
+    "@modelcontextprotocol/sdk": "^1.25.3",
     "ioredis": "^5.9.2",
     "nanoid": "^5.1.6"
   },

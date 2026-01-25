@@ -1,6 +1,6 @@
 /**
  * MCP Redis
- * Redis-backed MCP client with OAuth 2.0 and real-time SSE connections
+ * Redis-backed MCP client with OAuth 2.1 and real-time SSE connections
  *
  * @packageDocumentation
  */
