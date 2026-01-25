@@ -969,62 +969,73 @@ export class MCPClient {
    */
   static async getMcpServerConfig(identity: string): Promise<Record<string, any>> {
     const mcpConfig: Record<string, any> = {};
-    const sessionIds = await storage.getIdentityMcpSessions(identity);
+    const sessions = await storage.getIdentitySessionsData(identity);
 
-    for (const sessionId of sessionIds) {
-      try {
-        // Load session from Redis
-        const sessionData = await storage.getSession(identity, sessionId);
+    await Promise.all(
+      sessions.map(async (sessionData) => {
+        const { sessionId } = sessionData;
 
-        // Validate session - remove if invalid or inactive
-        if (
-          !sessionData ||
-          !sessionData.active ||
-          !sessionData.identity ||
-          !sessionData.serverId ||
-          !sessionData.transportType ||
-          !sessionData.serverUrl
-        ) {
-          await storage.removeSession(identity, sessionId);
-          continue;
-        }
-
-        // Get OAuth headers if session requires authentication
-        let headers: Record<string, string> | undefined;
         try {
-          const client = new MCPClient({ identity, sessionId });
-          await client.initialize();
-
-          const hasValidTokens = await client.getValidTokens();
-          if (hasValidTokens && client.oauthProvider) {
-            const tokens = await client.oauthProvider.tokens();
-            if (tokens?.access_token) {
-              headers = { Authorization: `Bearer ${tokens.access_token}` };
-            }
+          // Validate session - remove if invalid or inactive
+          if (
+            !sessionData.active ||
+            !sessionData.serverId ||
+            !sessionData.transportType ||
+            !sessionData.serverUrl ||
+            !sessionData.callbackUrl
+          ) {
+            await storage.removeSession(identity, sessionId);
+            return;
           }
+
+          // Get OAuth headers if session requires authentication
+          let headers: Record<string, string> | undefined;
+          try {
+            // Inject existing session data to avoid redundant storage reads in initialize()
+            const client = new MCPClient({
+              identity,
+              sessionId,
+              serverId: sessionData.serverId,
+              serverUrl: sessionData.serverUrl,
+              callbackUrl: sessionData.callbackUrl,
+              serverName: sessionData.serverName,
+              transportType: sessionData.transportType,
+              headers: sessionData.headers,
+            });
+
+            await client.initialize();
+
+            const hasValidTokens = await client.getValidTokens();
+            if (hasValidTokens && client.oauthProvider) {
+              const tokens = await client.oauthProvider.tokens();
+              if (tokens?.access_token) {
+                headers = { Authorization: `Bearer ${tokens.access_token}` };
+              }
+            }
+          } catch (error) {
+            console.warn(`[MCP] Failed to get OAuth tokens for ${sessionId}:`, error);
+          }
+
+          // Build server config
+          const label = sanitizeServerLabel(
+            sessionData.serverName || sessionData.serverId || 'server'
+          );
+
+          mcpConfig[label] = {
+            transport: sessionData.transportType,
+            url: sessionData.serverUrl,
+            ...(sessionData.serverName && {
+              serverName: sessionData.serverName,
+              serverLabel: label,
+            }),
+            ...(headers && { headers }),
+          };
         } catch (error) {
-          console.warn(`[MCP] Failed to get OAuth tokens for ${sessionId}:`, error);
+          await storage.removeSession(identity, sessionId);
+          console.warn(`[MCP] Failed to process session ${sessionId}:`, error);
         }
-
-        // Build server config
-        const label = sanitizeServerLabel(
-          sessionData.serverName || sessionData.serverId || 'server'
-        );
-
-        mcpConfig[label] = {
-          transport: sessionData.transportType,
-          url: sessionData.serverUrl,
-          ...(sessionData.serverName && {
-            serverName: sessionData.serverName,
-            serverLabel: label,
-          }),
-          ...(headers && { headers }),
-        };
-      } catch (error) {
-        await storage.removeSession(identity, sessionId);
-        console.warn(`[MCP] Failed to process session ${sessionId}:`, error);
-      }
-    }
+      })
+    );
 
     return mcpConfig;
   }
