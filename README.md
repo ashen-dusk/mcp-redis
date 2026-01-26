@@ -1,22 +1,45 @@
-# @mcp-ts/redis
+<div align="center">
+  <h1><img src="docs/static/img/logo.svg" width="45" alt="mcp-ts Logo" style="vertical-align: middle;" /> @mcp-ts</h1>
+  <p>A Lightweight MCP (Model Context Protocol) client library with integrated persistence.</p>
+</div>
 
-A Lightweight MCP (Model Context Protocol) client library for JavaScript applications, supporting multiple storage backends and real-time SSE support.
+<div align="center">
+  <video src="docs/static/vid/mcp-ts.mp4" width="100%" controls autoplay muted loop></video>
+</div>
 
-[![npm version](https://badge.fury.io/js/@mcp-ts%2Fredis.svg)](https://www.npmjs.com/package/@mcp-ts/redis)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+<div align="center">
+
+| *Supported Frameworks* | *Supported Storage Backends* |
+| :---: | :---: |
+| <img src="docs/static/img/framework/next.svg" width="35" height="35" /> <img src="docs/static/img/framework/node.svg" width="35" height="35" /> <img src="docs/static/img/framework/react.svg" width="35" height="35" /> <img src="docs/static/img/framework/vue.svg" width="35" height="35" /> <img src="docs/static/img/framework/express.svg" width="35" height="35" /> | <img src="docs/static/img/storage-backend/redis.svg" width="35" height="35" /> <img src="docs/static/img/storage-backend/filesystem.svg" width="35" height="35" /> <img src="docs/static/img/storage-backend/memory.svg" width="35" height="35" /> <img src="docs/static/img/storage-backend/postgres.svg" width="35" height="35" /> |
+
+</div>
+
+<p align="center">
+  <a href="https://www.npmjs.com/package/@mcp-ts/redis">
+    <img src="https://badge.fury.io/js/@mcp-ts%2Fredis.svg" alt="npm version" />
+  </a>
+  <a href="https://opensource.org/licenses/MIT">
+    <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT" />
+  </a>
+</p>
+
+
 
 ## Features
 
-- **⚡ Real-Time SSE** - Server-Sent Events for live connection updates
-- **💾 Flexible Storage** - Redis, File System, or In-Memory backends
-- **🚀 Serverless-Ready** - Works in serverless environments (Vercel, AWS Lambda, etc.)
-- **⚛️ React Hook** - `useMcp` hook for easy React integration
-- **🖖 Vue Composable** - `useMcp` composable for Vue applications
-- **🛠️ Full MCP Protocol** - Support for tools, prompts, and resources
-- **📘 TypeScript** - Complete type safety with exported types
-- **🐘 PostgreSQL** - Coming soon!
+- **Real-Time SSE** - Server-Sent Events for live connection and observability updates
+- **Flexible Storage** - Redis, File System, or In-Memory backends
+- **Serverless-Ready** - Works in serverless environments (Vercel, AWS Lambda, etc.)
+- **React Hook** - `useMcp` hook for easy React integration
+- **Vue Composable** - `useMcp` composable for Vue applications
+- **Full MCP Protocol** - Support for tools, prompts, and resources
+- **TypeScript** - Complete type safety with exported types
+- **PostgreSQL** - Coming soon!
 
 ## Installation
+
+To use the Redis-backed version of `mcp-ts`:
 
 ```bash
 npm install @mcp-ts/redis
@@ -137,24 +160,24 @@ The library supports multiple storage backends. You can explicitly select one us
 
 ### Configuration Examples
 
-1.  **<img src="docs/static/img/redis.svg" width="20" height="20" align="center" /> Redis** (Recommended for production)
+1.  **<img src="docs/static/img/storage-backend/redis.svg" width="20" height="20" align="center" /> Redis** (Recommended for production)
     ```bash
     MCP_TS_STORAGE_TYPE=redis
     REDIS_URL=redis://localhost:6379
     ```
 
-2.  **<img src="docs/static/img/filesystem.svg" width="20" height="20" align="center" /> File System** (Great for local dev)
+2.  **<img src="docs/static/img/storage-backend/filesystem.svg" width="20" height="20" align="center" /> File System** (Great for local dev)
     ```bash
     MCP_TS_STORAGE_TYPE=file
     MCP_TS_STORAGE_FILE=./sessions.json
     ```
 
-3.  **<img src="docs/static/img/memory.svg" width="20" height="20" align="center" /> In-Memory** (Default for testing)
+3.  **<img src="docs/static/img/storage-backend/memory.svg" width="20" height="20" align="center" /> In-Memory** (Default for testing)
     ```bash
     MCP_TS_STORAGE_TYPE=memory
     ```
 
-4.  **<img src="docs/static/img/postgres.svg" width="20" height="20" align="center" /> PostgreSQL** (Coming soon)
+4.  **<img src="docs/static/img/storage-backend/postgres.svg" width="20" height="20" align="center" /> PostgreSQL** (Coming soon)
     ```bash
     # Future release
     MCP_TS_STORAGE_TYPE=postgresql
@@ -202,6 +225,9 @@ graph TD
 - **Next.js Server**: Acts as a bridge, maintaining connections to external MCP servers.
 - **Storage**: Persists session state, OAuth tokens, and connection details (Redis, File, or Memory).
 - **SSE**: Delivers real-time updates (logs, tool list changes) to the client.
+
+> [!NOTE]
+> This package (`@mcp-ts/redis`) provides the Redis-backed storage for the mcp-ts ecosystem. Currently, all storage is accessed via Redis. Upcoming releases will introduce installable backends like `@mcp-ts/postgres`, enabling more flexible storage options with minimal bundle size.
 
 ## Contributing
 

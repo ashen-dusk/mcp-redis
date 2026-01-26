@@ -4,6 +4,7 @@ import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import Layout from '@theme/Layout';
 import Heading from '@theme/Heading';
+import CodeBlock from '@theme/CodeBlock';
 import { Terminal, AnimatedSpan, TypingAnimation } from '../components/Terminal';
 import { Boxes } from '../components/BackgroundBoxes';
 
@@ -72,6 +73,32 @@ export default function Home(): ReactNode {
       description="Lightweight MCP client library for JavaScript applications with Redis sessions and SSE support">
       <HomepageHeader />
       <main>
+        <div className="container" style={{ marginTop: '4rem', marginBottom: '4rem' }}>
+          <div className="row">
+            <div className="col col--8 col--offset-2">
+              <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+                <Heading as="h2">See it in Action</Heading>
+                <div style={{ fontSize: '1.2rem', marginTop: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                  Demonstration of interaction between remote MCP servers and the
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    <img src="/mcp-ts/img/framework/vercel.svg" alt="Vercel" width="16" height="16" /> AI SDK.
+                  </span>
+                </div>
+              </div>
+              <div style={{ position: 'relative', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 4px 16px rgba(0,0,0,0.2)' }}>
+                <video
+                  src="/mcp-ts/vid/mcp-ts.mp4"
+                  width="100%"
+                  controls
+                  autoPlay
+                  muted
+                  loop
+                  style={{ display: 'block' }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
         <section className={styles.features}>
           <div className="container">
             <div className="row">
@@ -81,9 +108,8 @@ export default function Home(): ReactNode {
                     Why mcp-ts?
                   </Heading>
                   <p style={{ fontSize: '1.2rem', maxWidth: '800px', margin: '0 auto', lineHeight: '1.8' }}>
-                    A modern, TypeScript-first MCP client library with Redis-backed session management
-                    and real-time Server-Sent Events (SSE) support. Designed for serverless environments
-                    and React applications.
+                    A lightweight, TypeScript-first MCP client for React and serverless apps.
+                    Features Redis-backed sessions and real-time updates via SSE.
                   </p>
                 </div>
               </div>
@@ -95,7 +121,7 @@ export default function Home(): ReactNode {
                   Build robust MCP connections with stateless session management
                   and SSE endpoints for real-time updates.
                 </p>
-                <pre style={{ backgroundColor: 'var(--ifm-code-background)', padding: '1rem', borderRadius: '8px' }}>
+                <CodeBlock language="typescript">
                   {`import { MCPClient } from '@mcp-ts/redis/server';
 
 const client = new MCPClient({
@@ -104,7 +130,7 @@ const client = new MCPClient({
 });
 
 await client.connect();`}
-                </pre>
+                </CodeBlock>
               </div>
               <div className="col col--6">
                 <Heading as="h3">Client-Side</Heading>
@@ -112,7 +138,7 @@ await client.connect();`}
                   Seamlessly integrate MCP connections into your React applications
                   with the useMcp hook and automatic state synchronization.
                 </p>
-                <pre style={{ backgroundColor: 'var(--ifm-code-background)', padding: '1rem', borderRadius: '8px' }}>
+                <CodeBlock language="tsx">
                   {`import { useMcp } from '@mcp-ts/redis/client';
 
 function MyComponent() {
@@ -123,7 +149,59 @@ function MyComponent() {
 
   return <div>...</div>;
 }`}
-                </pre>
+                </CodeBlock>
+              </div>
+            </div>
+          </div>
+        </section>
+        <section style={{ padding: '4rem 0', backgroundColor: 'var(--ifm-background-surface-color)' }}>
+          <div className="container">
+            <div className="row">
+              <div className="col col--8 col--offset-2">
+                <Heading as="h2" style={{ textAlign: 'center', marginBottom: '2rem' }}>
+                  Frequently Asked Questions
+                </Heading>
+
+                <div style={{ marginBottom: '2rem' }}>
+                  <Heading as="h3">What is mcp-ts and what is it for?</Heading>
+                  <p>
+                    <code>mcp-ts</code> acts as a secure bridge between your AI application (like a Vercel AI SDK chatbot)
+                    and Model Context Protocol (MCP) servers. It manages connections, handles complex authentication (OAuth),
+                    and persists session state using Storage Backends e.g. Redis, allowing your AI agents to use tools from external services reliably.
+                  </p>
+                </div>
+
+                <div style={{ marginBottom: '2rem' }}>
+                  <Heading as="h3">Why Server-Sent Events (SSE) instead of WebSockets?</Heading>
+                  <p>
+                    SSE is unidirectional and stateless, making it ideal for serverless environments (like Vercel/Next.js)
+                    where maintaining long-lived WebSocket connections is difficult, expensive, or subject to timeout limits.
+                  </p>
+                </div>
+
+                <div style={{ marginBottom: '2rem' }}>
+                  <Heading as="h3">Can I use this without Redis?</Heading>
+                  <p>
+                    Yes! We support <strong>In-Memory</strong> and <strong>File System</strong> storage for local development.
+                    However, for production in serverless environments, Redis is required to persist connection state across lambda invocations.
+                  </p>
+                </div>
+
+                <div style={{ marginBottom: '2rem' }}>
+                  <Heading as="h3">Is this compatible with the Vercel AI SDK?</Heading>
+                  <p>
+                    Absolutely. <code>mcp-ts</code> is designed to plug directly into the AI SDK's <code>streamText</code> and
+                    <code>generateText</code> functions, allowing LLMs to use MCP tools seamlessly.
+                  </p>
+                </div>
+
+                <div style={{ marginBottom: '2rem' }}>
+                  <Heading as="h3">How is authentication handled?</Heading>
+                  <p>
+                    The library includes detailed OAuth flows, handling token exchange and refresh automatically,
+                    so you can connect to secure MCP servers support (like Neon, Github, etc.) out of the box.
+                  </p>
+                </div>
               </div>
             </div>
           </div>

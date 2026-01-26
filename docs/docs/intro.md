@@ -34,7 +34,7 @@ We provide first-class support for popular frameworks:
 
 ## Integrations
 
-### <img src={useBaseUrl('/img/vercel.svg')} width={20} height={20} style={{ verticalAlign: 'middle' }} /> Vercel AI SDK
+### <img src={useBaseUrl('/img/framework/vercel.svg')} width={20} height={20} style={{ verticalAlign: 'middle' }} /> Vercel AI SDK
 
 mcp-ts provides first-class support for the Vercel AI SDK.
 - **Aggregated Tools** — Use `MultiSessionClient` to combine tools from multiple MCP servers.
