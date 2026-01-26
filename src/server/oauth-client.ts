@@ -516,6 +516,8 @@ export class MCPClient {
    * Saves active session to Redis after successful authentication
    * @param authCode - Authorization code received from OAuth callback
    */
+
+  // TODO: needs to be optimized
   async finishAuth(authCode: string): Promise<void> {
     this.emitStateChange('AUTHENTICATING');
     this.emitProgress('Exchanging authorization code for tokens...');
@@ -530,39 +532,93 @@ export class MCPClient {
     }
 
     /**
-     * Determine which transport to try first for finishing auth
-     * Note: finishAuth logic is transport-specific but usually similar. 
-     * We try streamable_http first if auto, or the specified one.
+     * Determine which transports to try for finishing auth
+     * If transportType is set, use only that. Otherwise try streamable_http then sse.
      */
-    const tt: TransportType = this.transportType || 'streamable_http';
-    this.transport = this.getTransport(tt);
+    const transportsToTry: TransportType[] = this.transportType
+      ? [this.transportType]
+      : ['streamable_http', 'sse'];
 
-    try {
-      await this.transport.finishAuth(authCode);
+    let lastError: unknown;
+    let tokensExchanged = false;
 
-      this.emitStateChange('AUTHENTICATED');
-      this.emitProgress('Creating authenticated client...');
+    for (const currentType of transportsToTry) {
+      const isLastAttempt = currentType === transportsToTry[transportsToTry.length - 1];
 
-      this.client = new Client(
-        {
-          name: 'mcp-ts-oauth-client',
-          version: '2.0',
-        },
-        { capabilities: {} }
-      );
+      try {
+        const transport = this.getTransport(currentType);
 
-      this.emitStateChange('CONNECTING');
+        /** Update local state with the transport we are about to try */
+        this.transport = transport;
 
-      /** We explicitly try to connect with the transport we just auth'd with first */
-      await this.client.connect(this.transport);
+        if (!tokensExchanged) {
+          await transport.finishAuth(authCode);
+          tokensExchanged = true;
+        } else {
+          this.emitProgress(`Tokens already exchanged, skipping auth step for ${currentType}...`);
+        }
 
-      this.emitStateChange('CONNECTED');
-      await this.saveSession(true);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Authentication failed';
+        /** Success! Update transport type */
+        this.transportType = currentType;
+
+        this.emitStateChange('AUTHENTICATED');
+        this.emitProgress('Creating authenticated client...');
+
+        this.client = new Client(
+          {
+            name: 'mcp-ts-oauth-client',
+            version: '2.0',
+          },
+          { capabilities: {} }
+        );
+
+        this.emitStateChange('CONNECTING');
+
+        /** We explicitly try to connect with the transport we just auth'd with first */
+        await this.client.connect(this.transport);
+
+        this.emitStateChange('CONNECTED');
+        await this.saveSession(true);
+
+        return; // Success, exit function
+
+      } catch (error) {
+        lastError = error;
+
+        const isAuthError = error instanceof SDKUnauthorizedError ||
+          (error instanceof Error && error.message.toLowerCase().includes('unauthorized'));
+
+        if (isAuthError) {
+          throw error;
+        }
+
+        const errorMessage = error instanceof Error ? error.message : String(error);
+
+        // Don't retry if the authorization code was rejected (it's one-time use)
+        if (!tokensExchanged && errorMessage.toLowerCase().includes('invalid authorization code')) {
+          const msg = error instanceof Error ? error.message : 'Authentication failed';
+          this.emitError(msg, 'auth');
+          this.emitStateChange('FAILED');
+          throw error;
+        }
+
+        if (isLastAttempt) {
+          const msg = error instanceof Error ? error.message : 'Authentication failed';
+          this.emitError(msg, 'auth');
+          this.emitStateChange('FAILED');
+          throw error;
+        }
+
+        // Log and retry
+        this.emitProgress(`Auth attempt with ${currentType} failed: ${errorMessage}. Retrying...`);
+      }
+    }
+
+    if (lastError) {
+      const errorMessage = lastError instanceof Error ? lastError.message : 'Authentication failed';
       this.emitError(errorMessage, 'auth');
       this.emitStateChange('FAILED');
-      throw error;
+      throw lastError;
     }
   }
 
