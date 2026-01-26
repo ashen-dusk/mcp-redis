@@ -125,7 +125,19 @@ const result = await client.callTool('get_weather', {
 });
 ```
 
+
 ---
+
+**`getAITools(): Promise<ToolSet>`**
+
+Get all MCP tools and convert them to AI SDK compatible tools.
+
+```typescript
+const tools = await client.getAITools();
+```
+
+---
+
 
 **`listPrompts(): Promise<ListPromptsResult>`**
 
