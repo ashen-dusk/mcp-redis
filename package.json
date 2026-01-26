@@ -72,12 +72,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/zonlabs/mcp-redis.git"
+    "url": "git+https://github.com/zonlabs/mcp-ts.git"
   },
   "bugs": {
-    "url": "https://github.com/zonlabs/mcp-redis/issues"
+    "url": "https://github.com/zonlabs/mcp-ts/issues"
   },
-  "homepage": "https://github.com/zonlabs/mcp-redis#readme",
+  "homepage": "https://github.com/zonlabs/mcp-ts#readme",
   "peerDependencies": {
     "react": ">=18.0.0"
   },

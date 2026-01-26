@@ -1,5 +1,5 @@
 {
-  "name": "mcp-redis-nextjs-example",
+  "name": "mcp-ts-nextjs-example",
   "version": "1.0.0",
   "description": "Next.js example for @mcp-ts/redis",
   "scripts": {
