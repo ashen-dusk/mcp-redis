@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 
-export default function PopupCallbackPage() {
+function PopupCallbackContent() {
     const searchParams = useSearchParams();
     const code = searchParams.get('code');
     const [status, setStatus] = useState('Processing authentication...');
@@ -57,5 +57,13 @@ export default function PopupCallbackPage() {
                 <p>{status}</p>
             </div>
         </div>
+    );
+}
+
+export default function PopupCallbackPage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <PopupCallbackContent />
+        </Suspense>
     );
 }

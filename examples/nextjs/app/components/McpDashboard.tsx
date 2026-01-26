@@ -10,6 +10,9 @@ import McpHeader from './dashboard/McpHeader';
 import { useOAuthPopup } from './dashboard/useOAuthPopup';
 import { Connection, ConnectConfig } from './dashboard/types';
 
+import Link from 'next/link';
+import { FiMessageSquare } from 'react-icons/fi';
+
 export default function McpDashboard() {
   const [identity] = useState('demo-user-123');
   const [authToken] = useState('demo-auth-token');
@@ -129,6 +132,13 @@ export default function McpDashboard() {
   return (
     <div className={styles.container}>
       <McpHeader status={status} />
+
+      <div className="flex justify-end p-4">
+        <Link href="/chat" className="flex items-center gap-2 px-4 py-2 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-black rounded-lg hover:opacity-90 transition-opacity font-bold shadow-lg">
+          <FiMessageSquare className="w-5 h-5" />
+          Go to Chat
+        </Link>
+      </div>
 
       <div className={styles.grid}>
         <ConnectForm

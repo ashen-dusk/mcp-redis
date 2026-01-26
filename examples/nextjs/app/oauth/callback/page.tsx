@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useMcp } from '@mcp-ts/redis/client';
+import { useMcp } from '@mcp-ts/redis/client/react';
 
-export default function OAuthCallback() {
+function OAuthCallbackContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [status, setStatus] = useState<'processing' | 'success' | 'error'>('processing');
@@ -92,6 +92,14 @@ export default function OAuthCallback() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function OAuthCallback() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <OAuthCallbackContent />
+    </Suspense>
   );
 }
 

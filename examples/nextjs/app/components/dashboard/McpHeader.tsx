@@ -8,7 +8,7 @@ interface McpHeaderProps {
 export default function McpHeader({ status }: McpHeaderProps) {
     return (
         <header className={styles.header}>
-            <h1>MCP Redis - Next.js Example</h1>
+            <h1>mcp-ts - Next.js Example</h1>
             <div className={styles.statusBadge} data-status={status}>
                 SSE Status: {status}
             </div>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import styles from '../McpDashboard.module.css';
 import { ConnectConfig } from './types';
+import { nanoid } from 'nanoid';
 
 interface ConnectFormProps {
     onConnect: (config: ConnectConfig) => Promise<void>;
@@ -11,7 +12,7 @@ interface ConnectFormProps {
 
 export default function ConnectForm({ onConnect, connecting, status, error }: ConnectFormProps) {
     const [serverName, setServerName] = useState('');
-    const [serverId, setServerId] = useState('');
+    const [serverId] = useState(() => `server-${nanoid(6)}`);
     const [serverUrl, setServerUrl] = useState('');
     // Use popup-specific callback URL
     const [callbackUrl, setCallbackUrl] = useState(() => {
@@ -37,18 +38,7 @@ export default function ConnectForm({ onConnect, connecting, status, error }: Co
         <section className={styles.card}>
             <h2>Connect to MCP Server</h2>
             <form onSubmit={handleSubmit} className={styles.form}>
-                <div className={styles.formGroup}>
-                    <label htmlFor="serverId">Server ID</label>
-                    <input
-                        id="serverId"
-                        type="text"
-                        value={serverId}
-                        onChange={(e) => setServerId(e.target.value)}
-                        placeholder="server-001"
-                        required
-                        disabled={connecting}
-                    />
-                </div>
+
 
                 <div className={styles.formGroup}>
                     <label htmlFor="serverName">Server Name</label>

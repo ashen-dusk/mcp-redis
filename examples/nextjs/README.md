@@ -501,5 +501,5 @@ MIT
 ## Support
 
 For issues or questions:
-- GitHub Issues: [mcp-redis/issues](https://github.com/ashen-dusk/mcp-redis/issues)
+- GitHub Issues: [mcp-redis/issues](https://github.com/zonlabs/mcp-redis/issues)
 - MCP Discord: [Model Context Protocol Community](https://discord.gg/modelcontextprotocol)

@@ -19,7 +19,7 @@
     "incremental": true,
     "paths": {
       "@/*": [
-        "./*"
+        "./app/*"
       ]
     },
     "plugins": [
