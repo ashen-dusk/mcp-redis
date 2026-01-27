@@ -85,8 +85,8 @@ export class MastraAdapter {
         try {
             const { parseSchema } = require('json-schema-to-zod');
             const zodSchemaString = parseSchema(schema);
-            // eslint-disable-next-line no-eval
-            return eval(zodSchemaString);
+            // eslint-disable-next-line
+            return new Function('z', 'return ' + zodSchemaString)(this.z);
         } catch (error) {
             // Fallback: Accept any object if conversion fails
             console.warn('[MastraAdapter] Failed to convert JSON Schema to Zod, using fallback:', error);
