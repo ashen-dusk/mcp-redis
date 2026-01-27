@@ -35,7 +35,12 @@ export class AIAdapter {
     }
 
     private async transformTools(client: MCPClient): Promise<ToolSet> {
-        if (!client.isConnected()) {
+        // Safe check for isConnected method
+        const isConnected = typeof client.isConnected === 'function'
+            ? client.isConnected()
+            : false;
+
+        if (!isConnected) {
             // Treat disconnected as empty tools for robust multi-session handling
             return {};
         }
@@ -47,7 +52,11 @@ export class AIAdapter {
         // @ts-ignore: ToolSet type inference can be tricky with dynamic imports
         return Object.fromEntries(
             result.tools.map((tool) => {
-                const prefix = this.options.prefix ?? client.getServerId()?.replace(/-/g, '') ?? 'mcp';
+                // Safe access to getServerId
+                const serverId = typeof client.getServerId === 'function'
+                    ? client.getServerId()
+                    : undefined;
+                const prefix = this.options.prefix ?? serverId?.replace(/-/g, '') ?? 'mcp';
                 return [
                     `tool_${prefix}_${tool.name}`,
                     {
@@ -83,9 +92,12 @@ export class AIAdapter {
                 try {
                     return await this.transformTools(client);
                 } catch (error) {
-                    // For multi-client, we log and continue. 
+                    // For multi-client, we log and continue.
                     // This is safer than throwing.
-                    console.error(`[AIAdapter] Failed to fetch tools from ${client.getServerId()}:`, error);
+                    const serverId = typeof client.getServerId === 'function'
+                        ? client.getServerId() ?? 'unknown'
+                        : 'unknown';
+                    console.error(`[AIAdapter] Failed to fetch tools from ${serverId}:`, error);
                     return {};
                 }
             })

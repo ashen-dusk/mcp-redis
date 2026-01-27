@@ -5,6 +5,7 @@ import {
   copilotRuntimeNextJSAppRouterEndpoint,
 } from "@copilotkit/runtime";
 import { HttpAgent } from "@ag-ui/client";
+import { AIAdapter } from "@mcp-ts/sdk/adapters/ai";
 
 const serviceAdapter = new EmptyAdapter();
 
@@ -24,13 +25,14 @@ export const POST = async (req: NextRequest) => {
   const { MultiSessionClient } = await import("@mcp-ts/sdk/server");
   const manager = new MultiSessionClient(identity);
 
-  try {
-    await manager.connect();
-  } catch (e) {
-    console.error("Failed to connect MCP manager:", e);
-  }
+  // Connect to all active sessions before getting tools
+  await manager.connect();
 
-  const mcpTools = await manager.getAITools();
+  // Log number of connected clients for debugging
+  const clients = manager.getClients();
+  console.log(`[CopilotKit] Connected to ${clients.length} MCP clients`);
+
+  const mcpTools = await AIAdapter.getTools(manager);
 
   // Convert MCP tools to CopilotKit Actions
   const mcpActions = Object.entries(mcpTools).map(([name, tool]: [string, any]) => ({

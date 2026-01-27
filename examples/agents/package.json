@@ -22,12 +22,10 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
-    "@langchain/langgraph-cli": "^1.0.4",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "concurrently": "^9.1.2",
     "eslint": "^9",
     "eslint-config-next": "16.1.1",
     "tailwindcss": "^4",

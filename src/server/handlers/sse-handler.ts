@@ -242,7 +242,7 @@ export class SSEConnectionManager {
     }
 
     // Generate session ID
-    const sessionId = storage.generateSessionId();
+    const sessionId = await storage.generateSessionId();
 
     // Emit connecting state
     this.emitConnectionEvent({

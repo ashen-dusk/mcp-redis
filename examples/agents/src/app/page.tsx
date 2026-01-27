@@ -6,6 +6,8 @@ import { MoonCard } from "@/components/moon";
 import { AgentState } from "@/lib/types";
 import {
   useCoAgent,
+
+  
   useDefaultTool,
   useFrontendTool,
   useHumanInTheLoop,
@@ -83,7 +85,7 @@ export default function CopilotKitPage() {
 function YourMainContent({ themeColor }: { themeColor: string }) {
   // 🪁 Shared State: https://docs.copilotkit.ai/pydantic-ai/shared-state
   const { state, setState } = useCoAgent({
-    name: "sample_agent",
+    name: "mcpAssistant",
   });
 
   // 🪁 Frontend Actions: https://docs.copilotkit.ai/coagents/frontend-actions
