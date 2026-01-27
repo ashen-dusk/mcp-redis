@@ -23,7 +23,7 @@ import useBaseUrl from '@docusaurus/useBaseUrl';
 ## Quick Install
 
 ```bash
-npm install @mcp-ts/redis
+npm install @mcp-ts/sdk
 ```
 
 ## Framework Guides

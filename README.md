@@ -23,8 +23,8 @@
 </div>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/@mcp-ts/redis">
-    <img src="https://badge.fury.io/js/@mcp-ts%2Fredis.svg" alt="npm version" />
+  <a href="https://www.npmjs.com/package/@mcp-ts/core">
+    <img src="https://badge.fury.io/js/@mcp-ts%2Fcore.svg" alt="npm version" />
   </a>
   <a href="https://opensource.org/licenses/MIT">
     <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT" />
@@ -62,11 +62,14 @@ That’s how `@mcp-ts` started.
 
 ## Installation
 
-To use the Redis-backed version of `mcp-ts`:
-
 ```bash
-npm install @mcp-ts/redis
+npm install @mcp-ts/core
 ```
+
+The package supports multiple storage backends out of the box:
+- **Memory** (default, no setup required)
+- **File** (local persistence)
+- **Redis** (production-ready, requires `npm install ioredis`)
 
 ## Quick Start
 
@@ -74,7 +77,7 @@ npm install @mcp-ts/redis
 
 ```typescript
 // app/api/mcp/route.ts
-import { createNextMcpHandler } from '@mcp-ts/redis/server';
+import { createNextMcpHandler } from '@mcp-ts/core/server';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -93,7 +96,7 @@ For advanced usage with `ai` SDK (e.g., `streamText`), use `MultiSessionClient` 
 
 ```typescript
 // app/api/chat/route.ts
-import { MultiSessionClient } from '@mcp-ts/redis/server';
+import { MultiSessionClient } from '@mcp-ts/core/server';
 import { streamText } from 'ai';
 import { openai } from '@ai-sdk/openai';
 
@@ -128,7 +131,7 @@ export async function POST(req: Request) {
 
 ```typescript
 'use client';
-import { useMcp } from '@mcp-ts/redis/client';
+import { useMcp } from '@mcp-ts/core/client';
 
 function App() {
   const { connections, connect, status } = useMcp({
@@ -250,7 +253,7 @@ graph TD
 - **SSE**: Delivers real-time updates (logs, tool list changes) to the client.
 
 > [!NOTE]
-> This package (`@mcp-ts/redis`) provides the Redis-backed storage for the mcp-ts ecosystem. Currently, all storage is accessed via Redis. Upcoming releases will introduce installable backends like `@mcp-ts/postgres`, enabling more flexible storage options with minimal bundle size.
+> This package (`@mcp-ts/core`) provides a unified MCP client with support for multiple storage backends (Memory, File, Redis). Storage backends use optional peer dependencies - install only what you need. Future releases may introduce separate storage plugins like `@mcp-ts/postgres` for even more flexibility.
 
 ## Contributing
 

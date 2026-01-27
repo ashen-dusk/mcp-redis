@@ -17,7 +17,7 @@ Complete guide for integrating mcp-ts with Next.js applications (App Router and 
 Create an API route handler at `app/api/mcp/route.ts`:
 
 ```typescript
-import { createNextMcpHandler } from '@mcp-ts/redis/server';
+import { createNextMcpHandler } from '@mcp-ts/sdk/server';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -46,7 +46,7 @@ Create a component at `components/McpConnections.tsx`:
 ```typescript
 'use client';
 
-import { useMcp } from '@mcp-ts/redis/client';
+import { useMcp } from '@mcp-ts/sdk/client';
 
 export function McpConnections({ identity }: { identity: string }) {
   const {
@@ -134,7 +134,7 @@ To build agentic workflows that use tools from multiple MCP servers, use `MultiS
 
 ```typescript
 // app/api/chat/route.ts
-import { MultiSessionClient } from '@mcp-ts/redis/server';
+import { MultiSessionClient } from '@mcp-ts/sdk/server';
 import { streamText } from 'ai';
 import { openai } from '@ai-sdk/openai';
 
@@ -170,7 +170,7 @@ export async function POST(req: Request) {
 Create `pages/api/mcp/sse.ts`:
 
 ```typescript
-import { createSSEHandler } from '@mcp-ts/redis/server';
+import { createSSEHandler } from '@mcp-ts/sdk/server';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 export default async function handler(
@@ -222,7 +222,7 @@ Handle OAuth callbacks at `app/oauth/callback-popup/page.tsx` (for popups) or `a
 
 import { useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useMcp } from '@mcp-ts/redis/client';
+import { useMcp } from '@mcp-ts/sdk/client';
 
 export default function OAuthCallback() {
   const searchParams = useSearchParams();
@@ -287,7 +287,7 @@ Ensure your platform supports:
 Here's a full working example:
 
 ```typescript title="app/api/mcp/route.ts"
-import { createNextMcpHandler } from '@mcp-ts/redis/server';
+import { createNextMcpHandler } from '@mcp-ts/sdk/server';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -304,7 +304,7 @@ export const { GET, POST } = createNextMcpHandler({
 ```typescript title="components/McpClient.tsx"
 'use client';
 
-import { useMcp } from '@mcp-ts/redis/client';
+import { useMcp } from '@mcp-ts/sdk/client';
 import { useState } from 'react';
 
 export function McpClient({ identity }: { identity: string }) {

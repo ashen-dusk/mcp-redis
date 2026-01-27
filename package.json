@@ -1,10 +1,10 @@
 {
-  "name": "@mcp-ts/redis",
+  "name": "@mcp-ts/sdk",
   "version": "1.0.0-rc.3",
   "publishConfig": {
     "access": "public"
   },
-  "description": "A Lightweight MCP (Model Context Protocol) client library for JavaScript applications, supporting multiple storage backends and real-time SSE support.",
+  "description": "A Lightweight MCP (Model Context Protocol) client library for JavaScript applications, supporting multiple storage backends (Memory, File, Redis) and real-time SSE support.",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",

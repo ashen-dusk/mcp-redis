@@ -13,7 +13,7 @@ Complete API documentation for mcp-ts.
 Creates handlers for Next.js App Router API routes.
 
 ```typescript
-import { createNextMcpHandler } from '@mcp-ts/redis/server';
+import { createNextMcpHandler } from '@mcp-ts/sdk/server';
 
 const { GET, POST } = createNextMcpHandler({
   getIdentity: (request) => string,
@@ -40,7 +40,7 @@ const { GET, POST } = createNextMcpHandler({
 Creates an SSE handler for standard Node.js/Express applications.
 
 ```typescript
-import { createSSEHandler } from '@mcp-ts/redis/server';
+import { createSSEHandler } from '@mcp-ts/sdk/server';
 
 const handler = createSSEHandler({
   identity: string,
@@ -65,7 +65,7 @@ const handler = createSSEHandler({
 Direct MCP client class for server-side operations.
 
 ```typescript
-import { MCPClient } from '@mcp-ts/redis/server';
+import { MCPClient } from '@mcp-ts/sdk/server';
 
 const client = new MCPClient({
   identity: string,
@@ -196,7 +196,7 @@ await client.finishAuth(authCode);
 Manages multiple MCP connections for a single user identity, allowing aggregation of tools from all connected servers.
 
 ```typescript
-import { MultiSessionClient } from '@mcp-ts/redis/server';
+import { MultiSessionClient } from '@mcp-ts/sdk/server';
 
 const mcp = new MultiSessionClient(identity, {
   timeout: 15000,
@@ -249,7 +249,7 @@ mcp.disconnect();
 Global storage instance that automatically selects the appropriate backend based on environment configuration.
 
 ```typescript
-import { storage } from '@mcp-ts/redis/server';
+import { storage } from '@mcp-ts/sdk/server';
 ```
 
 #### Configuration
@@ -408,7 +408,7 @@ import {
   RedisStorageBackend,
   MemoryStorageBackend,
   FileStorageBackend 
-} from '@mcp-ts/redis/server';
+} from '@mcp-ts/sdk/server';
 import { Redis } from 'ioredis';
 
 // Redis
@@ -432,7 +432,7 @@ const memoryStorage = new MemoryStorageBackend();
 React hook for managing MCP connections.
 
 ```typescript
-import { useMcp } from '@mcp-ts/redis/client';
+import { useMcp } from '@mcp-ts/sdk/client';
 
 const {
   connections,
@@ -483,7 +483,7 @@ const {
 Lower-level SSE client for custom implementations.
 
 ```typescript
-import { SSEClient } from '@mcp-ts/redis/client';
+import { SSEClient } from '@mcp-ts/sdk/client';
 
 const client = new SSEClient({
   url: string,
@@ -582,7 +582,7 @@ const tools = await client.listTools(sessionId);
 import type {
   McpConnectionState,
   McpConnectionEvent,
-} from '@mcp-ts/redis/shared';
+} from '@mcp-ts/sdk/shared';
 
 type McpConnectionState =
   | 'DISCONNECTED'
@@ -607,7 +607,7 @@ type McpConnectionEvent =
 ### Tool Types
 
 ```typescript
-import type { ToolInfo } from '@mcp-ts/redis/shared';
+import type { ToolInfo } from '@mcp-ts/sdk/shared';
 
 interface ToolInfo {
   name: string;
@@ -649,7 +649,7 @@ interface SessionData {
 Thrown when OAuth authorization is required.
 
 ```typescript
-import { UnauthorizedError } from '@mcp-ts/redis/server';
+import { UnauthorizedError } from '@mcp-ts/sdk/server';
 
 try {
   await client.connect();

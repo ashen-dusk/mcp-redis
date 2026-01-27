@@ -13,7 +13,7 @@ The `useMcp` hook provides a simple way to manage MCP connections in React appli
 ## Basic Usage
 
 ```typescript
-import { useMcp } from '@mcp-ts/redis/client';
+import { useMcp } from '@mcp-ts/sdk/client';
 
 function MyComponent() {
   const { connections, connect, disconnect, status } = useMcp({
@@ -332,11 +332,11 @@ import type {
   McpConnectionState,
   McpConnectionEvent,
   ToolInfo,
-} from '@mcp-ts/redis/shared';
+} from '@mcp-ts/sdk/shared';
 
 import type {
   McpClient, // Return type of useMcp
-} from '@mcp-ts/redis/client';
+} from '@mcp-ts/sdk/client';
 ```
 
 ## Next Steps

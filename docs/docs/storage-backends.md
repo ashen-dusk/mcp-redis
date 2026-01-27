@@ -42,7 +42,7 @@ REDIS_URL=rediss://default:password@host.upstash.io:6379
 **Usage:**
 
 ```typescript
-import { storage } from '@mcp-ts/redis/server';
+import { storage } from '@mcp-ts/sdk/server';
 
 // Storage automatically uses Redis when REDIS_URL is set
 const sessionId = storage.generateSessionId();
@@ -89,7 +89,7 @@ MCP_TS_STORAGE_FILE=./sessions.json
 **Usage:**
 
 ```typescript
-import { storage } from '@mcp-ts/redis/server';
+import { storage } from '@mcp-ts/sdk/server';
 
 // Storage automatically uses File when MCP_TS_STORAGE_FILE is set
 const sessions = await storage.getIdentitySessionsData('user-123');
@@ -144,7 +144,7 @@ MCP_TS_STORAGE_TYPE=memory
 **Usage:**
 
 ```typescript
-import { storage } from '@mcp-ts/redis/server';
+import { storage } from '@mcp-ts/sdk/server';
 
 // Storage uses in-memory by default if no other backend is configured
 await storage.createSession({
@@ -208,7 +208,7 @@ import {
   RedisStorageBackend,
   MemoryStorageBackend,
   FileStorageBackend 
-} from '@mcp-ts/redis/server';
+} from '@mcp-ts/sdk/server';
 import { Redis } from 'ioredis';
 
 // Custom Redis instance
