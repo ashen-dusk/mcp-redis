@@ -12,6 +12,7 @@ export default defineConfig({
     'adapters/langchain-adapter': 'src/adapters/langchain-adapter.ts',
     'adapters/mastra-adapter': 'src/adapters/mastra-adapter.ts',
     'adapters/copilotkit-adapter': 'src/adapters/copilotkit-adapter.ts',
+    'adapters/agui-middleware': 'src/adapters/agui-middleware.ts',
   },
   format: ['cjs', 'esm'],
   dts: {
@@ -31,6 +32,8 @@ export default defineConfig({
     '@modelcontextprotocol/sdk',
     'fs',
     'path',
+    'rxjs',
+    '@ag-ui/client',
   ],
   // Platform-specific bundles
   platform: 'neutral',
