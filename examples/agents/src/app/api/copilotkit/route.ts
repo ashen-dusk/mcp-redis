@@ -5,7 +5,8 @@ import {
   copilotRuntimeNextJSAppRouterEndpoint,
 } from "@copilotkit/runtime";
 import { HttpAgent } from "@ag-ui/client";
-import { AIAdapter } from "@mcp-ts/sdk/adapters/ai";
+import { CopilotKitAdapter } from "@mcp-ts/sdk/adapters/copilotkit";
+import { createMcpToolMiddleware } from "@mcp-ts/sdk/adapters/agui-middleware";
 
 const serviceAdapter = new EmptyAdapter();
 
@@ -17,7 +18,10 @@ export const POST = async (req: NextRequest) => {
   const mcpAssistant = new HttpAgent({
     url:
       process.env.NEXT_PUBLIC_BACKEND_URL ||
-      "http://localhost:8000/agent/agentic_chat", // Point to specific agent endpoint
+      "http://127.0.0.1:8000/agent", // Point to specific agent endpoint
+      headers: {
+      "Content-Type": "application/json",
+    },
   });
 
   const identity = "demo-user-123";
@@ -32,51 +36,35 @@ export const POST = async (req: NextRequest) => {
   const clients = manager.getClients();
   console.log(`[CopilotKit] Connected to ${clients.length} MCP clients`);
 
-  const mcpTools = await AIAdapter.getTools(manager);
+  const adapter = new CopilotKitAdapter(manager);
 
-  // Convert MCP tools to CopilotKit Actions
-  const mcpActions = Object.entries(mcpTools).map(([name, tool]: [string, any]) => ({
-    name,
-    description: tool.description,
-    parameters: tool.inputSchema,
-    handler: async (args: any) => {
-      console.log(`[MCP] Executing ${name} with args:`, args);
-      if (!tool.execute) {
-        throw new Error(`Tool ${name} is not executable`);
-      }
-      return await tool.execute(args, {
-        abortSignal: new AbortController().signal,
-        toolCallId: "manual-" + Math.random().toString(36).substring(7),
-        messages: []
-      });
-    }
-  }));
+  // Get tools in JSON Schema format for passing to the Python agent (OpenAI-compatible)
+  const agentTools = await adapter.getAgentTools();
+  // Pre-load actions for the middleware to use
+  const mcpActions = await adapter.getActions();
+
+  console.log(`[CopilotKit] Loaded ${agentTools.length} MCP tools for CopilotKit agent.`);
 
   /**
-   * 4️⃣ update agentState with mcpConfig
+   * 4️Add MCP Tool Execution Middleware
+   * This middleware intercepts MCP tool calls (server-*) and executes them server-side
    */
-  // mcpAssistant.use((input, next) => {
-  //   return next.run({
-  //     ...input,
-  //     state: {
-  //       ...input.state,
-  //     },
-  //   });
-  // });
-
+  mcpAssistant.use(createMcpToolMiddleware(manager, {
+    toolPrefix: 'server-',
+    actions: mcpActions,
+  }));
+ 
   /**
-   * 5️⃣ Runtime
+   * 6️⃣ Runtime
    */
   const runtime = new CopilotRuntime({
     agents: {
       mcpAssistant,
     },
-    // Inject MCP Tools as top-level actions
-    actions: mcpActions,
   });
 
   /**
-   * 6️⃣ Endpoint
+   * 7️⃣ Endpoint
    */
   const { handleRequest } =
     copilotRuntimeNextJSAppRouterEndpoint({
