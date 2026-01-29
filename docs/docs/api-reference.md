@@ -290,18 +290,86 @@ const adapter = new MastraAdapter(client: MCPClient | MultiSessionClient, option
 const tools = await adapter.getTools(); // Returns MastraTool[]
 ```
 
-#### `CopilotKitAdapter`
+#### `AguiAdapter`
 
-Convert MCP tools to CopilotKit actions.
+Convert MCP tools to AG-UI protocol format.
 
 ```typescript
-import { CopilotKitAdapter } from '@mcp-ts/sdk/adapters/copilotkit';
+import { AguiAdapter } from '@mcp-ts/sdk/adapters/agui-adapter';
 
-const adapter = new CopilotKitAdapter(client: MCPClient | MultiSessionClient, options?: {
-  prefix?: string  // Action name prefix
+const adapter = new AguiAdapter(client: MCPClient | MultiSessionClient, options?: {
+  prefix?: string  // Tool name prefix (default: serverId)
 });
 
-const actions = await adapter.getActions(); // Returns CopilotKitAction[]
+// Get tools with handlers for server-side execution
+const tools = await adapter.getTools(); // Returns AguiTool[]
+
+// Get tool definitions (JSON Schema) for remote agents
+const definitions = await adapter.getToolDefinitions(); // Returns AguiToolDefinition[]
+```
+
+**Types:**
+
+```typescript
+interface AguiTool {
+  name: string;
+  description: string;
+  parameters?: Record<string, any>;
+  handler?: (args: any) => any | Promise<any>;
+}
+
+interface AguiToolDefinition {
+  name: string;
+  description: string;
+  parameters: Record<string, any>;
+}
+```
+
+---
+
+#### `createMcpMiddleware`
+
+Create AG-UI middleware for server-side MCP tool execution.
+
+```typescript
+import { createMcpMiddleware } from '@mcp-ts/sdk/adapters/agui-middleware';
+import { HttpAgent } from '@ag-ui/client';
+
+const agent = new HttpAgent({ url: 'http://localhost:8000/agent' });
+
+agent.use(createMcpMiddleware(client: MCPClient | MultiSessionClient, options?: {
+  toolPrefix?: string  // Prefix to identify MCP tools (default: 'server-')
+  tools?: AguiTool[]   // Pre-loaded tools with handlers
+}));
+```
+
+**Parameters:**
+- `client` - MCP client or MultiSessionClient for executing tools
+- `options.toolPrefix` - Prefix to identify MCP tools in the event stream (default: `'server-'`)
+- `options.tools` - Pre-loaded tools with handlers. If not provided, tools will be loaded from the client on first use.
+
+**Returns:** Middleware function compatible with AG-UI `agent.use()`
+
+**Example:**
+
+```typescript
+import { HttpAgent } from '@ag-ui/client';
+import { AguiAdapter } from '@mcp-ts/sdk/adapters/agui-adapter';
+import { createMcpMiddleware } from '@mcp-ts/sdk/adapters/agui-middleware';
+
+// Setup
+const manager = new MultiSessionClient('user_123');
+await manager.connect();
+
+const adapter = new AguiAdapter(manager);
+const mcpTools = await adapter.getTools();
+
+// Create agent with middleware
+const agent = new HttpAgent({ url: 'http://localhost:8000/agent' });
+agent.use(createMcpMiddleware(manager, {
+  toolPrefix: 'server-',
+  tools: mcpTools,
+}));
 ```
 
 ## Storage Backend API
