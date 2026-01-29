@@ -11,7 +11,7 @@ export default defineConfig({
     'adapters/ai-adapter': 'src/adapters/ai-adapter.ts',
     'adapters/langchain-adapter': 'src/adapters/langchain-adapter.ts',
     'adapters/mastra-adapter': 'src/adapters/mastra-adapter.ts',
-    'adapters/copilotkit-adapter': 'src/adapters/copilotkit-adapter.ts',
+    'adapters/agui-adapter': 'src/adapters/agui-adapter.ts',
     'adapters/agui-middleware': 'src/adapters/agui-middleware.ts',
   },
   format: ['cjs', 'esm'],

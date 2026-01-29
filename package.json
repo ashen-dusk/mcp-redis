@@ -54,10 +54,10 @@
       "import": "./dist/adapters/mastra-adapter.mjs",
       "require": "./dist/adapters/mastra-adapter.js"
     },
-    "./adapters/copilotkit": {
-      "types": "./dist/adapters/copilotkit-adapter.d.ts",
-      "import": "./dist/adapters/copilotkit-adapter.mjs",
-      "require": "./dist/adapters/copilotkit-adapter.js"
+    "./adapters/agui-adapter": {
+      "types": "./dist/adapters/agui-adapter.d.ts",
+      "import": "./dist/adapters/agui-adapter.mjs",
+      "require": "./dist/adapters/agui-adapter.js"
     },
     "./adapters/agui-middleware": {
       "types": "./dist/adapters/agui-middleware.d.ts",

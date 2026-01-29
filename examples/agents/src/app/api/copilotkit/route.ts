@@ -5,20 +5,20 @@ import {
   copilotRuntimeNextJSAppRouterEndpoint,
 } from "@copilotkit/runtime";
 import { HttpAgent } from "@ag-ui/client";
-import { CopilotKitAdapter } from "@mcp-ts/sdk/adapters/copilotkit";
-import { createMcpToolMiddleware } from "@mcp-ts/sdk/adapters/agui-middleware";
+import { AguiAdapter } from "@mcp-ts/sdk/adapters/agui-adapter";
+import { createMcpMiddleware } from "@mcp-ts/sdk/adapters/agui-middleware";
 
 const serviceAdapter = new EmptyAdapter();
 
 export const POST = async (req: NextRequest) => {
 
   /**
-   * 3️⃣ Create MCP Agent
+   * Create MCP Agent
    */
   const mcpAssistant = new HttpAgent({
     url:
       process.env.NEXT_PUBLIC_BACKEND_URL ||
-      "http://127.0.0.1:8000/agent", // Point to specific agent endpoint
+      "http://127.0.0.1:8000/agent",
       headers: {
       "Content-Type": "application/json",
     },
@@ -36,26 +36,24 @@ export const POST = async (req: NextRequest) => {
   const clients = manager.getClients();
   console.log(`[CopilotKit] Connected to ${clients.length} MCP clients`);
 
-  const adapter = new CopilotKitAdapter(manager);
+  const adapter = new AguiAdapter(manager);
 
-  // Get tools in JSON Schema format for passing to the Python agent (OpenAI-compatible)
-  const agentTools = await adapter.getAgentTools();
-  // Pre-load actions for the middleware to use
-  const mcpActions = await adapter.getActions();
+  // Get tools with handlers for the middleware
+  const mcpTools = await adapter.getTools();
 
-  console.log(`[CopilotKit] Loaded ${agentTools.length} MCP tools for CopilotKit agent.`);
+  console.log(`[CopilotKit] Loaded ${mcpTools.length} MCP tools for CopilotKit agent.`);
 
   /**
-   * 4️Add MCP Tool Execution Middleware
+   * Add MCP Tool Execution Middleware
    * This middleware intercepts MCP tool calls (server-*) and executes them server-side
    */
-  mcpAssistant.use(createMcpToolMiddleware(manager, {
+  mcpAssistant.use(createMcpMiddleware(manager, {
     toolPrefix: 'server-',
-    actions: mcpActions,
+    tools: mcpTools,
   }));
- 
+
   /**
-   * 6️⃣ Runtime
+   * Runtime
    */
   const runtime = new CopilotRuntime({
     agents: {
@@ -64,7 +62,7 @@ export const POST = async (req: NextRequest) => {
   });
 
   /**
-   * 7️⃣ Endpoint
+   * Endpoint
    */
   const { handleRequest } =
     copilotRuntimeNextJSAppRouterEndpoint({

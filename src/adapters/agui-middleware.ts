@@ -1,15 +1,70 @@
 /**
  * AG-UI Middleware for MCP Tool Execution
  *
- * This middleware intercepts tool calls from remote agents and executes
- * MCP tools server-side, then returns the results to the agent.
+ * This middleware intercepts tool calls from remote agents (e.g., LangGraph, AutoGen)
+ * and executes MCP tools server-side, returning results back to the agent.
  *
- * @requires @ag-ui/client - This adapter requires @ag-ui/client as a peer dependency
+ * ## How It Works
+ *
+ * 1. **Tool Injection**: When a run starts, the middleware injects MCP tool definitions
+ *    into `input.tools` so the remote agent knows about available MCP tools.
+ *
+ * 2. **Event Interception**: The middleware subscribes to the agent's event stream and
+ *    tracks tool calls using AG-UI events:
+ *    - `TOOL_CALL_START`: Records tool name and ID
+ *    - `TOOL_CALL_ARGS`: Accumulates streamed arguments
+ *    - `TOOL_CALL_END`: Marks tool call as complete
+ *    - `RUN_FINISHED`: Triggers execution of pending MCP tools
+ *
+ * 3. **Server-Side Execution**: When `RUN_FINISHED` arrives with pending MCP tool calls,
+ *    the middleware:
+ *    - Executes each MCP tool via the MCP client
+ *    - Emits `TOOL_CALL_RESULT` events with the results
+ *    - Adds results to `input.messages` for context
+ *    - Emits `RUN_FINISHED` to close the current run
+ *    - Triggers a new run so the agent can process tool results
+ *
+ * 4. **Recursive Processing**: If the new run makes more MCP tool calls, the cycle
+ *    repeats until the agent completes without pending MCP calls.
+ *
+ * ## Tool Identification
+ *
+ * MCP tools are identified by a configurable prefix (default: `server-`).
+ * Tools not matching this prefix are passed through without interception.
+ *
+ * @requires @ag-ui/client - This middleware requires @ag-ui/client as a peer dependency
+ * @requires rxjs - Uses RxJS Observables for event streaming
+ *
+ * @example
+ * ```typescript
+ * import { HttpAgent } from '@ag-ui/client';
+ * import { McpMiddleware } from '@mcp-ts/sdk/adapters/agui-middleware';
+ * import { AguiAdapter } from '@mcp-ts/sdk/adapters/agui-adapter';
+ *
+ * // Create MCP client and adapter
+ * const mcpClient = new MultiSessionClient('user_123');
+ * await mcpClient.connect();
+ *
+ * const adapter = new AguiAdapter(mcpClient);
+ * const actions = await adapter.getActions();
+ *
+ * // Create middleware with pre-loaded actions
+ * const middleware = new McpMiddleware({
+ *   client: mcpClient,
+ *   actions,
+ *   toolPrefix: 'server-',
+ * });
+ *
+ * // Use with HttpAgent
+ * const agent = new HttpAgent({ url: 'http://localhost:8000/agent' });
+ * agent.use(middleware);
+ * ```
  */
 
-import { Observable, from, mergeMap, of, concat } from 'rxjs';
+import { Observable, Subscriber } from 'rxjs';
 import {
     Middleware,
+    EventType,
     type AbstractAgent,
     type RunAgentInput,
     type BaseEvent,
@@ -17,7 +72,7 @@ import {
 } from '@ag-ui/client';
 import { MCPClient } from '../server/mcp/oauth-client.js';
 import { MultiSessionClient } from '../server/mcp/multi-session-client.js';
-import type { CopilotKitAction } from './copilotkit-adapter.js';
+import type { AguiTool } from './agui-adapter.js';
 
 /**
  * Tool definition format for AG-UI input.tools
@@ -28,83 +83,60 @@ export interface AgUiTool {
     parameters?: Record<string, any>;
 }
 
-export interface McpToolExecutorConfig {
+/**
+ * Configuration for McpMiddleware
+ */
+export interface McpMiddlewareConfig {
     /**
      * MCP client or MultiSessionClient for executing tools
      */
     client: MCPClient | MultiSessionClient;
 
     /**
-     * Prefix used for MCP tool names (used to identify MCP tools)
+     * Prefix used to identify MCP tool names.
+     * Tools starting with this prefix will be executed server-side.
      * @default 'server-'
      */
     toolPrefix?: string;
 
     /**
-     * Pre-loaded actions (optional - will be loaded if not provided)
+     * Pre-loaded tools with handlers for execution.
+     * If not provided, tools will be loaded from the MCP client on first use.
      */
-    actions?: CopilotKitAction[];
-
-    /**
-     * Pre-loaded tools in AG-UI format (optional - will be generated from actions if not provided)
-     */
-    tools?: AgUiTool[];
-
-    /**
-     * Identity for session management
-     */
-    identity?: string;
+    tools?: AguiTool[];
 }
 
 /**
  * AG-UI Middleware that executes MCP tools server-side.
  *
- * When the agent makes a tool call for an MCP tool (identified by prefix),
- * this middleware intercepts the call, executes it via the MCP client,
- * and returns the result to the agent.
+ * This middleware intercepts tool calls for MCP tools (identified by prefix),
+ * executes them via the MCP client, and returns results to the agent.
  *
- * @example
- * ```typescript
- * import { HttpAgent } from '@ag-ui/client';
- * import { McpToolExecutorMiddleware } from '@mcp-ts/sdk/adapters/agui-middleware';
- *
- * const mcpMiddleware = new McpToolExecutorMiddleware({
- *   client: multiSessionClient,
- *   toolPrefix: 'server-',
- * });
- *
- * const agent = new HttpAgent({ url: 'http://localhost:8000/agent' });
- * agent.use(mcpMiddleware);
- * ```
+ * @see {@link createMcpMiddleware} for a simpler factory function
  */
-export class McpToolExecutorMiddleware extends Middleware {
+export class McpMiddleware extends Middleware {
     private client: MCPClient | MultiSessionClient;
     private toolPrefix: string;
-    private actions: CopilotKitAction[] | null;
+    private actions: AguiTool[] | null;
     private tools: AgUiTool[] | null;
     private actionsLoaded: boolean = false;
-    private toolCallArgsBuffer: Map<string, string> = new Map();
-    private toolCallNames: Map<string, string> = new Map();
 
-    constructor(config: McpToolExecutorConfig) {
+    constructor(config: McpMiddlewareConfig) {
         super();
         this.client = config.client;
         this.toolPrefix = config.toolPrefix ?? 'server-';
-        this.actions = config.actions ?? null;
-        this.tools = config.tools ?? null;
+        this.actions = config.tools ?? null;
+        this.tools = null;
         if (this.actions) {
             this.actionsLoaded = true;
-            // Generate tools from actions if not provided
-            if (!this.tools) {
-                this.tools = this.actionsToTools(this.actions);
-            }
+            this.tools = this.actionsToTools(this.actions);
         }
     }
 
     /**
      * Convert actions to AG-UI tool format
      */
-    private actionsToTools(actions: CopilotKitAction[]): AgUiTool[] {
+    private actionsToTools(actions: AguiTool[]): AgUiTool[] {
         return actions.map(action => ({
             name: action.name,
             description: action.description,
@@ -113,7 +145,7 @@ export class McpToolExecutorMiddleware extends Middleware {
     }
 
     /**
-     * Check if a tool name is an MCP tool
+     * Check if a tool name is an MCP tool (matches the configured prefix)
      */
     private isMcpTool(toolName: string): boolean {
         return toolName.startsWith(this.toolPrefix);
@@ -125,14 +157,14 @@ export class McpToolExecutorMiddleware extends Middleware {
     private async ensureActionsLoaded(): Promise<void> {
         if (this.actionsLoaded) return;
 
-        const { CopilotKitAdapter } = await import('./copilotkit-adapter.js');
-        const adapter = new CopilotKitAdapter(this.client);
-        this.actions = await adapter.getActions();
+        const { AguiAdapter } = await import('./agui-adapter.js');
+        const adapter = new AguiAdapter(this.client);
+        this.actions = await adapter.getTools();
         this.actionsLoaded = true;
     }
 
     /**
-     * Execute an MCP tool and return the result
+     * Execute an MCP tool and return the result as a string
      */
     private async executeTool(toolName: string, args: Record<string, any>): Promise<string> {
         await this.ensureActionsLoaded();
@@ -147,128 +179,321 @@ export class McpToolExecutorMiddleware extends Middleware {
         }
 
         try {
-            console.log(`[McpToolExecutor] Executing tool: ${toolName}`, args);
+            console.log(`[McpMiddleware] Executing tool: ${toolName}`, args);
             const result = await action.handler(args);
-            console.log(`[McpToolExecutor] Tool result:`, typeof result === 'string' ? result.slice(0, 200) : result);
+            console.log(`[McpMiddleware] Tool result:`, typeof result === 'string' ? result.slice(0, 200) : result);
             return typeof result === 'string' ? result : JSON.stringify(result);
         } catch (error: any) {
-            console.error(`[McpToolExecutor] Error executing tool:`, error);
+            console.error(`[McpMiddleware] Error executing tool:`, error);
             return `Error executing tool: ${error.message || String(error)}`;
         }
     }
 
     /**
-     * Generate a unique message ID
+     * Generate a unique message ID for tool results
      */
     private generateMessageId(): string {
         return `mcp_result_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
     }
 
+    /**
+     * Run the middleware, intercepting and executing MCP tool calls
+     */
     run(input: RunAgentInput, next: AbstractAgent): Observable<BaseEvent> {
-        // Clear buffers for new run
-        this.toolCallArgsBuffer.clear();
-        this.toolCallNames.clear();
+        return new Observable<BaseEvent>((observer: Subscriber<BaseEvent>) => {
+            // State for this run
+            const toolCallArgsBuffer = new Map<string, string>();
+            const toolCallNames = new Map<string, string>();
+            const pendingMcpCalls = new Set<string>();
 
-        console.log(`[McpToolExecutor] Starting run with ${this.actions?.length ?? 0} registered actions`);
-        console.log(`[McpToolExecutor] Tool prefix: "${this.toolPrefix}"`);
+            console.log(`[McpMiddleware] Starting run with ${this.actions?.length ?? 0} registered actions`);
+            console.log(`[McpMiddleware] Tool prefix: "${this.toolPrefix}"`);
 
-        // Inject MCP tools into input.tools
-        if (this.tools && this.tools.length > 0) {
-            const existingTools = input.tools || [];
-            input.tools = [...existingTools, ...this.tools];
-            console.log(`[McpToolExecutor] Injected ${this.tools.length} MCP tools into input.tools`);
-            console.log(`[McpToolExecutor] Total tools: ${input.tools.length}`);
-            console.log(`[McpToolExecutor] Tool names:`, this.tools.map(t => t.name));
-        }
+            // Inject MCP tools into input.tools
+            if (this.tools && this.tools.length > 0) {
+                const existingTools = input.tools || [];
+                input.tools = [...existingTools, ...this.tools];
+                console.log(`[McpMiddleware] Injected ${this.tools.length} MCP tools into input.tools`);
+                console.log(`[McpMiddleware] Total tools: ${input.tools.length}`);
+                console.log(`[McpMiddleware] Tool names:`, this.tools.map(t => t.name));
+            }
 
-        return next.run(input).pipe(
-            mergeMap((event: BaseEvent) => {
-                // Track tool call names from TOOL_CALL_START events
-                if (event.type === 'TOOL_CALL_START') {
+            const handleRunFinished = async (event: BaseEvent) => {
+                if (pendingMcpCalls.size === 0) {
+                    observer.next(event);
+                    observer.complete();
+                    return;
+                }
+
+                console.log(`[McpMiddleware] RUN_FINISHED received with ${pendingMcpCalls.size} pending MCP calls`);
+
+                // Execute all pending MCP tool calls
+                const callPromises = [...pendingMcpCalls].map(async (toolCallId) => {
+                    const toolName = toolCallNames.get(toolCallId);
+                    if (!toolName) return;
+
+                    const argsString = toolCallArgsBuffer.get(toolCallId) || '{}';
+                    let args: Record<string, any> = {};
+                    try {
+                        args = JSON.parse(argsString);
+                    } catch (e) {
+                        console.error(`[McpMiddleware] Failed to parse args:`, argsString);
+                    }
+
+                    console.log(`[McpMiddleware] Executing pending tool: ${toolName}`);
+                    const result = await this.executeTool(toolName, args);
+                    const messageId = this.generateMessageId();
+
+                    // Emit tool result event
+                    const resultEvent: BaseEvent = {
+                        type: EventType.TOOL_CALL_RESULT,
+                        toolCallId,
+                        messageId,
+                        content: result,
+                        role: 'tool',
+                        timestamp: Date.now(),
+                    } as any;
+
+                    console.log(`[McpMiddleware] Emitting TOOL_CALL_RESULT for: ${toolName}`);
+                    observer.next(resultEvent);
+
+                    // Add tool result to messages for the next run
+                    input.messages.push({
+                        id: messageId,
+                        role: 'tool',
+                        toolCallId,
+                        content: result,
+                    } as any);
+
+                    pendingMcpCalls.delete(toolCallId);
+                });
+
+                await Promise.all(callPromises);
+
+                // Emit RUN_FINISHED before starting new run
+                console.log(`[McpMiddleware] All MCP tools executed, emitting RUN_FINISHED`);
+                observer.next({
+                    type: EventType.RUN_FINISHED,
+                    threadId: (input as any).threadId,
+                    runId: (input as any).runId,
+                    timestamp: Date.now(),
+                } as any);
+
+                // Trigger a new run to continue the conversation
+                console.log(`[McpMiddleware] Triggering new run`);
+                this.triggerNewRun(observer, input, next, toolCallArgsBuffer, toolCallNames, pendingMcpCalls);
+            };
+
+            const subscription = next.run(input).subscribe({
+                next: (event: BaseEvent) => {
+                    // Track tool call names from TOOL_CALL_START events
+                    if (event.type === EventType.TOOL_CALL_START) {
+                        const startEvent = event as any;
+                        if (startEvent.toolCallId && startEvent.toolCallName) {
+                            toolCallNames.set(startEvent.toolCallId, startEvent.toolCallName);
+                            const isMcp = this.isMcpTool(startEvent.toolCallName);
+                            console.log(`[McpMiddleware] TOOL_CALL_START: ${startEvent.toolCallName} (id: ${startEvent.toolCallId}, isMCP: ${isMcp})`);
+
+                            if (isMcp) {
+                                pendingMcpCalls.add(startEvent.toolCallId);
+                            }
+                        }
+                    }
+
+                    // Accumulate tool call arguments from TOOL_CALL_ARGS events
+                    if (event.type === EventType.TOOL_CALL_ARGS) {
+                        const argsEvent = event as any;
+                        if (argsEvent.toolCallId && argsEvent.delta) {
+                            const existing = toolCallArgsBuffer.get(argsEvent.toolCallId) || '';
+                            toolCallArgsBuffer.set(argsEvent.toolCallId, existing + argsEvent.delta);
+                        }
+                    }
+
+                    // Track TOOL_CALL_END
+                    if (event.type === EventType.TOOL_CALL_END) {
+                        const endEvent = event as ToolCallEndEvent;
+                        const toolName = toolCallNames.get(endEvent.toolCallId);
+                        console.log(`[McpMiddleware] TOOL_CALL_END: ${toolName ?? 'unknown'} (id: ${endEvent.toolCallId})`);
+                    }
+
+                    // Handle RUN_FINISHED - execute pending MCP tools
+                    if (event.type === EventType.RUN_FINISHED) {
+                        handleRunFinished(event);
+                        return;
+                    }
+
+                    // Pass through all other events
+                    observer.next(event);
+                },
+                error: (error) => {
+                    observer.error(error);
+                },
+                complete: () => {
+                    if (pendingMcpCalls.size === 0) {
+                        observer.complete();
+                    }
+                },
+            });
+
+            return () => {
+                subscription.unsubscribe();
+            };
+        });
+    }
+
+    private triggerNewRun(
+        observer: Subscriber<BaseEvent>,
+        input: RunAgentInput,
+        next: AbstractAgent,
+        toolCallArgsBuffer: Map<string, string>,
+        toolCallNames: Map<string, string>,
+        pendingMcpCalls: Set<string>,
+    ): void {
+        toolCallArgsBuffer.clear();
+        toolCallNames.clear();
+        pendingMcpCalls.clear();
+
+        console.log(`[McpMiddleware] Starting new run with updated messages`);
+
+        const subscription = next.run(input).subscribe({
+            next: (event: BaseEvent) => {
+                if (event.type === EventType.TOOL_CALL_START) {
                     const startEvent = event as any;
                     if (startEvent.toolCallId && startEvent.toolCallName) {
-                        this.toolCallNames.set(startEvent.toolCallId, startEvent.toolCallName);
+                        toolCallNames.set(startEvent.toolCallId, startEvent.toolCallName);
                         const isMcp = this.isMcpTool(startEvent.toolCallName);
-                        console.log(`[McpToolExecutor] TOOL_CALL_START: ${startEvent.toolCallName} (id: ${startEvent.toolCallId}, isMCP: ${isMcp})`);
+                        console.log(`[McpMiddleware] TOOL_CALL_START: ${startEvent.toolCallName} (id: ${startEvent.toolCallId}, isMCP: ${isMcp})`);
+
+                        if (isMcp) {
+                            pendingMcpCalls.add(startEvent.toolCallId);
+                        }
                     }
                 }
 
-                // Accumulate tool call arguments from TOOL_CALL_ARGS events
-                if (event.type === 'TOOL_CALL_ARGS') {
+                if (event.type === EventType.TOOL_CALL_ARGS) {
                     const argsEvent = event as any;
                     if (argsEvent.toolCallId && argsEvent.delta) {
-                        const existing = this.toolCallArgsBuffer.get(argsEvent.toolCallId) || '';
-                        this.toolCallArgsBuffer.set(argsEvent.toolCallId, existing + argsEvent.delta);
+                        const existing = toolCallArgsBuffer.get(argsEvent.toolCallId) || '';
+                        toolCallArgsBuffer.set(argsEvent.toolCallId, existing + argsEvent.delta);
                     }
                 }
 
-                // Handle TOOL_CALL_END - execute MCP tools
-                if (event.type === 'TOOL_CALL_END') {
+                if (event.type === EventType.TOOL_CALL_END) {
                     const endEvent = event as ToolCallEndEvent;
-                    const toolName = this.toolCallNames.get(endEvent.toolCallId);
-
-                    console.log(`[McpToolExecutor] TOOL_CALL_END: ${toolName ?? 'unknown'} (id: ${endEvent.toolCallId})`);
-
-                    if (toolName && this.isMcpTool(toolName)) {
-                        // Parse accumulated arguments
-                        const argsString = this.toolCallArgsBuffer.get(endEvent.toolCallId) || '{}';
-                        let args: Record<string, any> = {};
-                        try {
-                            args = JSON.parse(argsString);
-                        } catch (e) {
-                            console.error(`[McpToolExecutor] Failed to parse args:`, argsString);
-                        }
-
-                        console.log(`[McpToolExecutor] Intercepting MCP tool call: ${toolName}`);
-                        console.log(`[McpToolExecutor] Arguments:`, JSON.stringify(args, null, 2));
-
-                        // Execute the tool and emit result
-                        return concat(
-                            of(event), // Emit the TOOL_CALL_END event first
-                            from(this.executeTool(toolName, args)).pipe(
-                                mergeMap((result: string) => {
-                                    console.log(`[McpToolExecutor] Emitting TOOL_CALL_RESULT for: ${toolName}`);
-                                    // Create a TOOL_CALL_RESULT event
-                                    const resultEvent: BaseEvent = {
-                                        type: 'TOOL_CALL_RESULT' as any,
-                                        toolCallId: endEvent.toolCallId,
-                                        messageId: this.generateMessageId(),
-                                        content: result,
-                                        role: 'tool',
-                                        timestamp: Date.now(),
-                                    } as any;
-                                    return of(resultEvent);
-                                })
-                            )
-                        );
-                    }
+                    const toolName = toolCallNames.get(endEvent.toolCallId);
+                    console.log(`[McpMiddleware] TOOL_CALL_END: ${toolName ?? 'unknown'} (id: ${endEvent.toolCallId})`);
                 }
 
-                // Pass through all other events unchanged
-                return of(event);
-            })
-        );
+                if (event.type === EventType.RUN_FINISHED) {
+                    if (pendingMcpCalls.size > 0) {
+                        console.log(`[McpMiddleware] RUN_FINISHED with ${pendingMcpCalls.size} pending calls, executing...`);
+                        this.handlePendingCalls(observer, input, next, toolCallArgsBuffer, toolCallNames, pendingMcpCalls);
+                    } else {
+                        observer.next(event);
+                        observer.complete();
+                    }
+                    return;
+                }
+
+                observer.next(event);
+            },
+            error: (error) => observer.error(error),
+            complete: () => {
+                if (pendingMcpCalls.size === 0) {
+                    observer.complete();
+                }
+            },
+        });
+    }
+
+    private async handlePendingCalls(
+        observer: Subscriber<BaseEvent>,
+        input: RunAgentInput,
+        next: AbstractAgent,
+        toolCallArgsBuffer: Map<string, string>,
+        toolCallNames: Map<string, string>,
+        pendingMcpCalls: Set<string>,
+    ): Promise<void> {
+        const callPromises = [...pendingMcpCalls].map(async (toolCallId) => {
+            const toolName = toolCallNames.get(toolCallId);
+            if (!toolName) return;
+
+            const argsString = toolCallArgsBuffer.get(toolCallId) || '{}';
+            let args: Record<string, any> = {};
+            try {
+                args = JSON.parse(argsString);
+            } catch (e) {
+                console.error(`[McpMiddleware] Failed to parse args:`, argsString);
+            }
+
+            console.log(`[McpMiddleware] Executing pending tool: ${toolName}`);
+            const result = await this.executeTool(toolName, args);
+            const messageId = this.generateMessageId();
+
+            const resultEvent: BaseEvent = {
+                type: EventType.TOOL_CALL_RESULT,
+                toolCallId,
+                messageId,
+                content: result,
+                role: 'tool',
+                timestamp: Date.now(),
+            } as any;
+
+            console.log(`[McpMiddleware] Emitting TOOL_CALL_RESULT for: ${toolName}`);
+            observer.next(resultEvent);
+
+            input.messages.push({
+                id: messageId,
+                role: 'tool',
+                toolCallId,
+                content: result,
+            } as any);
+
+            pendingMcpCalls.delete(toolCallId);
+        });
+
+        await Promise.all(callPromises);
+
+        console.log(`[McpMiddleware] Pending tools executed, emitting RUN_FINISHED`);
+        observer.next({
+            type: EventType.RUN_FINISHED,
+            threadId: (input as any).threadId,
+            runId: (input as any).runId,
+            timestamp: Date.now(),
+        } as any);
+
+        console.log(`[McpMiddleware] Triggering new run`);
+        this.triggerNewRun(observer, input, next, toolCallArgsBuffer, toolCallNames, pendingMcpCalls);
     }
 }
 
 /**
- * Create a function middleware for MCP tool execution.
- * This is a simpler alternative to the class-based middleware.
+ * Factory function to create MCP middleware.
+ *
+ * This is a convenience wrapper around McpMiddleware that returns a function
+ * compatible with the AG-UI middleware pattern.
+ *
+ * @param client - MCP client or MultiSessionClient
+ * @param options - Configuration options
+ * @returns Middleware function
  *
  * @example
  * ```typescript
  * import { HttpAgent } from '@ag-ui/client';
- * import { createMcpToolMiddleware } from '@mcp-ts/sdk/adapters/agui-middleware';
+ * import { createMcpMiddleware } from '@mcp-ts/sdk/adapters/agui-middleware';
  *
  * const agent = new HttpAgent({ url: 'http://localhost:8000/agent' });
- * agent.use(createMcpToolMiddleware(multiSessionClient));
+ * agent.use(createMcpMiddleware(multiSessionClient, {
+ *   toolPrefix: 'server-',
+ *   actions: mcpActions,
+ * }));
  * ```
  */
-export function createMcpToolMiddleware(
+export function createMcpMiddleware(
     client: MCPClient | MultiSessionClient,
-    options: { toolPrefix?: string; actions?: CopilotKitAction[] } = {}
+    options: { toolPrefix?: string; tools?: AguiTool[] } = {}
 ) {
-    const middleware = new McpToolExecutorMiddleware({
+    const middleware = new McpMiddleware({
         client,
         ...options,
     });
@@ -278,6 +503,10 @@ export function createMcpToolMiddleware(
     };
 }
 
+// Legacy exports for backward compatibility
+export { McpMiddleware as McpToolExecutorMiddleware };
+export { createMcpMiddleware as createMcpToolMiddleware };
+
 // Re-export types for convenience
-export { Middleware };
+export { Middleware, EventType };
 export type { RunAgentInput, BaseEvent, AbstractAgent, ToolCallEndEvent };

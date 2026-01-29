@@ -22,23 +22,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-agents = {
-    # Register the LangGraph agent using the LangGraphAgent class
-    "agentic_chat": LangGraphAGUIAgent(
-        name="agentic_chat",
+langgraph_agent = LangGraphAGUIAgent(
+        name="mcpAssistant",
         description="An example for an agentic chat flow using LangGraph.",
         graph=agentic_chat_graph,
-    ),
-}
+    )
+
 
 add_langgraph_fastapi_endpoint(
-    app=app, agent=agents["agentic_chat"], path="./agent"
+    app=app, agent=langgraph_agent, path="/agent"
 )
-
-def main():
-    """Run the uvicorn server."""
-    port = int(os.getenv("PORT", "8000"))
-    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True)
-
-if __name__ == "__main__":
-    main()
