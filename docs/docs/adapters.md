@@ -13,7 +13,7 @@ Adapters transforms MCP tools into framework-specific formats for seamless integ
 | <IoSparkles size={20} color="black" style={{ verticalAlign: 'middle' }} /> **AI SDK** | Vercel AI SDK | `@mcp-ts/sdk/adapters/ai` | `ai` |
 | ![LangChain](/img/agent-framework/langchain.svg) **LangChain** | LangChain | `@mcp-ts/sdk/adapters/langchain` | `@langchain/core`, `zod` |
 | ![Mastra](/img/agent-framework/mastra.svg) **Mastra** | Mastra | `@mcp-ts/sdk/adapters/mastra` | `zod` |
-| ![AG-UI](/img/agent-framework/agui.svg) **AG-UI** | AG-UI Protocol | `@mcp-ts/sdk/adapters/agui-adapter` | `@ag-ui/client`, `rxjs` |
+| ![AG-UI](/img/agent-framework/agui.webp) **AG-UI** | AG-UI Protocol | `@mcp-ts/sdk/adapters/agui-adapter` | `@ag-ui/client`, `rxjs` |
 
 ---
 
@@ -125,7 +125,7 @@ See [API Reference](./api-reference.md#mastraadapter).
 
 ---
 
-<h2><img src="/mcp-ts/img/agent-framework/agui.svg" height="24" style={{ verticalAlign: 'middle', marginRight: '10px', display: 'inline' }} /> AG-UI Adapter</h2>
+<h2><img src="/mcp-ts/img/agent-framework/agui.webp" height="24" style={{ verticalAlign: 'middle', marginRight: '10px', display: 'inline' }} /> AG-UI Adapter</h2>
 
 Convert MCP tools to AG-UI protocol format for use with remote agents (LangGraph, AutoGen, etc.).
 
