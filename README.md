@@ -16,9 +16,9 @@
 
 <div align="center">
 
-| *Supported Frameworks* | *Agent Frameworks* | *Storage Backends* |
+| *Supported Frameworks* | *Agent Frameworks and Protocol* | *Storage Backends* |
 | :---: | :---: | :---: |
-| <img src="docs/static/img/framework/next.svg" width="35" height="35" /> <img src="docs/static/img/framework/node.svg" width="35" height="35" /> <img src="docs/static/img/framework/react.svg" width="35" height="35" /> <img src="docs/static/img/framework/vue.svg" width="35" height="35" /> <img src="docs/static/img/framework/express.svg" width="35" height="35" /> | <img src="docs/static/img/framework/vercel.svg" width="35" height="35" /> <img src="docs/static/img/agent-framework/langchain.svg" width="35" height="35" /> <img src="docs/static/img/agent-framework/mastra.svg" width="35" height="35" /> <img src="docs/static/img/agent-framework/agui.svg" width="35" height="35" /> | <img src="docs/static/img/storage-backend/redis.svg" width="35" height="35" /> <img src="docs/static/img/storage-backend/filesystem.svg" width="35" height="35" /> <img src="docs/static/img/storage-backend/memory.svg" width="35" height="35" /> |
+| <img src="docs/static/img/framework/next.svg" width="35" height="35" /> <img src="docs/static/img/framework/node.svg" width="35" height="35" /> <img src="docs/static/img/framework/react.svg" width="35" height="35" /> <img src="docs/static/img/framework/vue.svg" width="35" height="35" /> <img src="docs/static/img/framework/express.svg" width="35" height="35" /> | <img src="docs/static/img/framework/vercel.svg" width="35" height="35" /> <img src="docs/static/img/agent-framework/langchain.svg" width="35" height="35" /> <img src="docs/static/img/agent-framework/mastra.svg" width="35" height="35" /> <img src="docs/static/img/agent-framework/agui.webp" width="35" height="35" /> | <img src="docs/static/img/storage-backend/redis.svg" width="35" height="35" /> <img src="docs/static/img/storage-backend/filesystem.svg" width="35" height="35" /> <img src="docs/static/img/storage-backend/memory.svg" width="35" height="35" /> |
 
 </div>
 
@@ -97,18 +97,20 @@ For advanced usage with `ai` SDK (e.g., `streamText`), use `MultiSessionClient` 
 ```typescript
 // app/api/chat/route.ts
 import { MultiSessionClient } from '@mcp-ts/sdk/server';
+import { AIAdapter } from '@mcp-ts/sdk/adapters/ai';
 import { streamText } from 'ai';
 import { openai } from '@ai-sdk/openai';
 
 export async function POST(req: Request) {
   const { messages, identity } = await req.json();
 
-  const mcp = new MultiSessionClient(identity);
+  const client = new MultiSessionClient(identity);
 
   try {
-    await mcp.connect();
+    await client.connect();
 
-    const tools = await mcp.getAITools();
+    const tools = await AIAdapter.getTools(client);
+
 
     const result = streamText({
       model: openai('gpt-4'),
@@ -163,7 +165,7 @@ function App() {
 }
 ```
 
-### <img src="docs/static/img/agent-framework/agui.svg" width="20" height="20" align="center" /> AG-UI Middleware
+### <img src="docs/static/img/agent-framework/agui.webp" width="20" height="20" align="center" /> AG-UI Middleware
 
 Execute MCP tools server-side when using remote agents (LangGraph, AutoGen, etc.):
 
@@ -271,7 +273,17 @@ graph TD
 - **SSE**: Delivers real-time updates (logs, tool list changes) to the client.
 
 > [!NOTE]
-> This package (`@mcp-ts/sdk`) provides a unified MCP client with support for multiple storage backends (Memory, File, Redis). Storage backends use optional peer dependencies - install only what you need. Future releases may introduce separate storage plugins like `@mcp-ts/postgres` for even more flexibility.
+> This package (`@mcp-ts/sdk`) provides a unified MCP client with support for adapters and storage backends such as AI SDK, Mastra, LangChain, and Redis.
+> Adapters and storage backends are loaded via **optional peer dependencies** and must be installed independently. This ensures your application only includes the integrations you explicitly choose, keeping bundle size small and avoiding unnecessary dependencies.
+> The SDK includes built-in support for **Memory** and **File** storage, while additional backends (such as Redis) and adapters can be added without impacting users who don’t need them.
+
+For more details, refer to the documentation and follow the **installation guide for each adapter or storage backend**.
+
+- [AI SDK Installation Guide](https://zonlabs.github.io/mcp-ts/docs/adapters#installation)
+- [Mastra Installation Guide](https://zonlabs.github.io/mcp-ts/docs/adapters#installation)
+- [LangChain Installation Guide](https://zonlabs.github.io/mcp-ts/docs/adapters#installation)
+- [Redis Storage Installation Guide](https://zonlabs.github.io/mcp-ts/docs/storage-backends#-redis-production)
+
 
 ## Contributing
 
