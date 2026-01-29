@@ -13,7 +13,7 @@ export interface SessionData {
     transportType: 'sse' | 'streamable_http';
     callbackUrl: string;
     createdAt: number;
-    identity?: string;
+    identity: string;
     headers?: Record<string, string>;
     // OAuth data (consolidated)
     clientInformation?: OAuthClientInformationMixed;

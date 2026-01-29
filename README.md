@@ -3,7 +3,7 @@
     <img src="docs/static/img/logo.svg" alt="mcp-ts Logo" width="80" height="80" />
   </a>
   <h1 align="center">@mcp-ts</h1>
-  <p>A Lightweight MCP (Model Context Protocol) client library with integrated persistence.</p>
+  <p>TypeScript SDK providing MCP capabilities to agents in JavaScript/cross-runtime environments.</p>
 </div>
 
 <div align="center">
