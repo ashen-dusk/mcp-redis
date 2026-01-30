@@ -176,8 +176,11 @@ export class McpMiddleware extends Middleware {
                 // Discover tools
                 for (let i = messages.length - 1; i >= 0; i--) {
                     const msg = messages[i];
-                    if (msg.role === 'assistant' && Array.isArray(msg.toolCalls)) {
-                        for (const tc of msg.toolCalls) {
+                    const tools = Array.isArray(msg.toolCalls) ? msg.toolCalls :
+                        (Array.isArray(msg.tool_calls) ? msg.tool_calls : []);
+
+                    if (msg.role === 'assistant' && tools.length > 0) {
+                        for (const tc of tools) {
                             if (tc.id && tc.function?.name && !toolCallNames.has(tc.id)) {
                                 toolCallNames.set(tc.id, tc.function.name);
                                 toolCallArgsBuffer.set(tc.id, tc.function.arguments || '{}');
@@ -324,7 +327,6 @@ export class McpMiddleware extends Middleware {
 
                 anyInput.runId = this.generateId('mcp_run');
                 console.log(`[McpMiddleware] === CONTINUATION RUN === messages: ${input.messages.length}`);
-                console.log(`[McpMiddleware] CONTINUATION INPUT MESSAGES:`, JSON.stringify(input.messages, null, 2));
 
                 // Subscribe to continuation
                 next.run(input).subscribe({
