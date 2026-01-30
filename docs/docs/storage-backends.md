@@ -141,6 +141,37 @@ MCP_TS_STORAGE_TYPE=memory
 # No additional configuration needed
 ```
 
+---
+
+### <DocIcon type="sqlite" size={24} /> SQLite (Persistent & Fast)
+
+**Zero-configuration persistent storage, faster than file based.**
+
+SQLite provides a single-file relational database that is robust and requires no external server process.
+
+**Installation:**
+
+```bash
+npm install better-sqlite3
+npm install -D @types/better-sqlite3
+```
+
+**Configuration:**
+
+```bash
+# Explicit selection (optional)
+MCP_TS_STORAGE_TYPE=sqlite
+
+# SQLite DB Path (optional, defaults to ./sessions.db)
+MCP_TS_STORAGE_SQLITE_PATH=./data/mcp.db
+```
+
+**Features:**
+- <DocIcon type="success" size={16} /> Persistent single-file database
+- <DocIcon type="bolt" size={16} /> Much faster than JSON file storage
+- <DocIcon type="success" size={16} /> ACID compliant transactions
+- <DocIcon type="success" size={16} /> Zero configuration (auto-creates DB)
+
 **Features:**
 - <DocIcon type="success" size={16} /> Fastest performance
 - <DocIcon type="success" size={16} /> No external dependencies
@@ -193,7 +224,15 @@ graph TD
     C --> I[Storage Ready]
     E --> I
     G --> I
-    H --> I
+    F -->|No| G{MCP_TS_STORAGE_SQLITE_PATH present?}
+    G -->|Yes| H[Use SQLite]
+    G -->|No| I[Use In-Memory Default]
+    
+    C --> J[Storage Ready]
+    E --> J
+    K[Use File System] --> J
+    H --> J
+    I --> J
 ```
 
 **Priority Order:**
@@ -201,7 +240,8 @@ graph TD
 1. **Explicit**: If `MCP_TS_STORAGE_TYPE` is set, use that backend
 2. **Auto-detect Redis**: If `REDIS_URL` is present, use Redis
 3. **Auto-detect File**: If `MCP_TS_STORAGE_FILE` is present, use File
-4. **Default**: Fall back to In-Memory storage
+4. **Auto-detect SQLite**: If `MCP_TS_STORAGE_SQLITE_PATH` is present, use SQLite
+5. **Default**: Fall back to In-Memory storage
 
 ---
 
@@ -239,13 +279,13 @@ const memoryStorage = new MemoryStorageBackend();
 
 ## <DocIcon type="chart" size={28} /> Backend Comparison
 
-| Feature | <DocIcon type="redis" size={20} /> Redis | <DocIcon type="filesystem" size={20} /> File System | <DocIcon type="memory" size={20} /> In-Memory |
-|---------|----------|----------------|--------------|
-| **Persistence** | <DocIcon type="success" size={16} /> Yes | <DocIcon type="success" size={16} /> Yes | <DocIcon type="error" size={16} /> No |
-| **Distributed** | <DocIcon type="success" size={16} /> Yes | <DocIcon type="error" size={16} /> No | <DocIcon type="error" size={16} /> No |
-| **Auto-Expiry** | <DocIcon type="success" size={16} /> Yes (TTL) | <DocIcon type="error" size={16} /> No | <DocIcon type="error" size={16} /> No |
-| **Performance** | <DocIcon type="bolt" size={16} /> Fast | <DocIcon type="chart" size={16} /> Medium | <DocIcon type="rocket" size={16} /> Fastest |
-| **Setup** | <DocIcon type="tools" size={16} /> Requires Redis | <DocIcon type="filesystem" size={16} /> Built-in | <DocIcon type="target" size={16} /> Built-in |
+| Feature | <DocIcon type="redis" size={20} /> Redis | <DocIcon type="sqlite" size={20} /> SQLite | <DocIcon type="filesystem" size={20} /> File System | <DocIcon type="memory" size={20} /> In-Memory |
+|---------|----------|----------|----------------|--------------|
+| **Persistence** | <DocIcon type="success" size={16} /> Yes | <DocIcon type="success" size={16} /> Yes | <DocIcon type="success" size={16} /> Yes | <DocIcon type="error" size={16} /> No |
+| **Distributed** | <DocIcon type="success" size={16} /> Yes | <DocIcon type="error" size={16} /> No | <DocIcon type="error" size={16} /> No | <DocIcon type="error" size={16} /> No |
+| **Auto-Expiry** | <DocIcon type="success" size={16} /> Yes (TTL) | <DocIcon type="success" size={16} /> Yes (Manual) | <DocIcon type="error" size={16} /> No | <DocIcon type="error" size={16} /> No |
+| **Performance** | <DocIcon type="bolt" size={16} /> Fast | <DocIcon type="bolt" size={16} /> Very Fast | <DocIcon type="chart" size={16} /> Medium | <DocIcon type="rocket" size={16} /> Fastest |
+| **Setup** | <DocIcon type="tools" size={16} /> Requires Redis | <DocIcon type="tools" size={16} /> Native | <DocIcon type="filesystem" size={16} /> Built-in | <DocIcon type="target" size={16} /> Built-in |
 | **Serverless** | <DocIcon type="success" size={16} /> Yes | <DocIcon type="warning" size={16} /> Limited | <DocIcon type="success" size={16} /> Yes |
 | **Production** | <DocIcon type="success" size={16} /> Recommended | <DocIcon type="warning" size={16} /> Single-instance | <DocIcon type="error" size={16} /> Not recommended |
 | **Development** | <DocIcon type="success" size={16} /> Good | <DocIcon type="success" size={16} /> Excellent | <DocIcon type="success" size={16} /> Good |

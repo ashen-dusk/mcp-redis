@@ -18,7 +18,7 @@
 
 | *Supported Frameworks* | *Agent Frameworks and Protocol* | *Storage Backends* |
 | :---: | :---: | :---: |
-| <img src="docs/static/img/framework/next.svg" width="35" height="35" /> <img src="docs/static/img/framework/node.svg" width="35" height="35" /> <img src="docs/static/img/framework/react.svg" width="35" height="35" /> <img src="docs/static/img/framework/vue.svg" width="35" height="35" /> <img src="docs/static/img/framework/express.svg" width="35" height="35" /> | <img src="docs/static/img/framework/vercel.svg" width="35" height="35" /> <img src="docs/static/img/agent-framework/langchain.svg" width="35" height="35" /> <img src="docs/static/img/agent-framework/mastra.svg" width="35" height="35" /> <img src="docs/static/img/agent-framework/agui.webp" width="35" height="35" /> | <img src="docs/static/img/storage-backend/redis.svg" width="35" height="35" /> <img src="docs/static/img/storage-backend/filesystem.svg" width="35" height="35" /> <img src="docs/static/img/storage-backend/memory.svg" width="35" height="35" /> |
+| <img src="docs/static/img/framework/next.svg" width="35" height="35" /> <img src="docs/static/img/framework/node.svg" width="35" height="35" /> <img src="docs/static/img/framework/react.svg" width="35" height="35" /> <img src="docs/static/img/framework/vue.svg" width="35" height="35" /> <img src="docs/static/img/framework/express.svg" width="35" height="35" /> | <img src="docs/static/img/framework/vercel.svg" width="35" height="35" /> <img src="docs/static/img/agent-framework/langchain.svg" width="35" height="35" /> <img src="docs/static/img/agent-framework/mastra.svg" width="35" height="35" /> <img src="docs/static/img/agent-framework/agui.webp" width="35" height="35" /> | <img src="docs/static/img/storage-backend/redis.svg" width="35" height="35" /> <img src="docs/static/img/storage-backend/sqlite.svg" width="35" height="35" /> <img src="docs/static/img/storage-backend/filesystem.svg" width="35" height="35" /> <img src="docs/static/img/storage-backend/memory.svg" width="35" height="35" /> |
 
 </div>
 
@@ -36,7 +36,7 @@
 ## Features
 
 - **Real-Time SSE** - Server-Sent Events for live connection and observability updates
-- **Flexible Storage** - Redis, File System, or In-Memory backends
+- **Flexible Storage** - Redis, SQLite, File System, or In-Memory backends
 - **Serverless-Ready** - Works in serverless environments (Vercel, AWS Lambda, etc.)
 - **React Hook** - `useMcp` hook for easy React integration
 - **Vue Composable** - `useMcp` composable for Vue applications
@@ -69,6 +69,7 @@ npm install @mcp-ts/sdk
 The package supports multiple storage backends out of the box:
 - **Memory** (default, no setup required)
 - **File** (local persistence)
+- **SQLite** (fast local persistence, requires `npm install better-sqlite3`)
 - **Redis** (production-ready, requires `npm install ioredis`)
 
 ## Quick Start
@@ -210,7 +211,7 @@ Full documentation is available at: **[Docs](https://zonlabs.github.io/mcp-ts/)*
 
 The library supports multiple storage backends. You can explicitly select one using `MCP_TS_STORAGE_TYPE` or rely on automatic detection.
 
-**Supported Types:** `redis`, `file`, `memory`.
+**Supported Types:** `redis`, `sqlite`, `file`, `memory`.
 
 ### Configuration Examples
 
@@ -220,13 +221,20 @@ The library supports multiple storage backends. You can explicitly select one us
     REDIS_URL=redis://localhost:6379
     ```
 
-2.  **<img src="docs/static/img/storage-backend/filesystem.svg" width="20" height="20" align="center" /> File System** (Great for local dev)
+2.  **<img src="docs/static/img/storage-backend/sqlite.svg" width="20" height="20" align="center" /> SQLite** (Fast & Persistent)
+    ```bash
+    MCP_TS_STORAGE_TYPE=sqlite
+    # Optional path
+    MCP_TS_STORAGE_SQLITE_PATH=./sessions.db
+    ```
+
+3.  **<img src="docs/static/img/storage-backend/filesystem.svg" width="20" height="20" align="center" /> File System** (Great for local dev)
     ```bash
     MCP_TS_STORAGE_TYPE=file
     MCP_TS_STORAGE_FILE=./sessions.json
     ```
 
-3.  **<img src="docs/static/img/storage-backend/memory.svg" width="20" height="20" align="center" /> In-Memory** (Default for testing)
+4.  **<img src="docs/static/img/storage-backend/memory.svg" width="20" height="20" align="center" /> In-Memory** (Default for testing)
     ```bash
     MCP_TS_STORAGE_TYPE=memory
     ```

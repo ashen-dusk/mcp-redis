@@ -2,11 +2,12 @@
 import { RedisStorageBackend } from './redis-backend';
 import { MemoryStorageBackend } from './memory-backend';
 import { FileStorageBackend } from './file-backend';
+import { SqliteStorage } from './sqlite-backend';
 import type { StorageBackend } from './types';
 
 // Re-export types
 export * from './types';
-export { RedisStorageBackend, MemoryStorageBackend, FileStorageBackend };
+export { RedisStorageBackend, MemoryStorageBackend, FileStorageBackend, SqliteStorage };
 
 let storageInstance: StorageBackend | null = null;
 let storagePromise: Promise<StorageBackend> | null = null;
@@ -42,6 +43,14 @@ async function createStorage(): Promise<StorageBackend> {
         return store;
     }
 
+    if (type === 'sqlite') {
+        const dbPath = process.env.MCP_TS_STORAGE_SQLITE_PATH;
+        console.log(`[Storage] Using SQLite storage (${dbPath || 'default'}) (Explicit)`);
+        const store = new SqliteStorage({ path: dbPath });
+        store.init().catch(err => console.error('[Storage] Failed to initialize SQLite storage:', err));
+        return store;
+    }
+
     if (type === 'memory') {
         console.log('[Storage] Using In-Memory storage (Explicit)');
         return new MemoryStorageBackend();
@@ -65,6 +74,13 @@ async function createStorage(): Promise<StorageBackend> {
         console.log(`[Storage] Auto-detected MCP_TS_STORAGE_FILE. Using File storage (${process.env.MCP_TS_STORAGE_FILE}).`);
         const store = new FileStorageBackend({ path: process.env.MCP_TS_STORAGE_FILE });
         store.init().catch(err => console.error('[Storage] Failed to initialize file storage:', err));
+        return store;
+    }
+
+    if (process.env.MCP_TS_STORAGE_SQLITE_PATH) {
+        console.log(`[Storage] Auto-detected MCP_TS_STORAGE_SQLITE_PATH. Using SQLite storage (${process.env.MCP_TS_STORAGE_SQLITE_PATH}).`);
+        const store = new SqliteStorage({ path: process.env.MCP_TS_STORAGE_SQLITE_PATH });
+        store.init().catch(err => console.error('[Storage] Failed to initialize SQLite storage:', err));
         return store;
     }
 
