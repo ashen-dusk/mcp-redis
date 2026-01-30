@@ -227,7 +227,10 @@ export class SSEConnectionManager {
    * Connect to an MCP server
    */
   private async connect(params: ConnectParams): Promise<ConnectResult> {
-    const { serverId, serverName, serverUrl, callbackUrl, transportType } = params;
+    const { serverName, serverUrl, callbackUrl, transportType } = params;
+
+    // generate serverId on server-side if not provided
+    const serverId = params.serverId || await storage.generateSessionId(); // we use serverid as session id internally to track individual connections.
 
     // Check for existing connections
     const existingSessions = await storage.getIdentitySessionsData(this.identity);

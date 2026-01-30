@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { nanoid } from 'nanoid';
 import { ConnectConfig } from './types';
 
 interface ConnectFormProps {
@@ -24,9 +23,8 @@ export function ConnectForm({ onConnect, connecting, status, error }: ConnectFor
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const serverId = `server-${nanoid(6)}`;
+    // serverId is generated server-side
     await onConnect({
-      serverId,
       serverName,
       serverUrl,
       callbackUrl,

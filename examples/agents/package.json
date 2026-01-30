@@ -14,11 +14,11 @@
     "@copilotkit/react-core": "1.51.0",
     "@copilotkit/react-ui": "1.51.0",
     "@copilotkit/runtime": "1.51.0",
+    "@mcp-ts/sdk": "file:../..",
     "next": "16.1.1",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
-    "react18-json-view": "^0.2.9",
-    "@mcp-ts/sdk": "file:../.."
+    "react18-json-view": "^0.2.9"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

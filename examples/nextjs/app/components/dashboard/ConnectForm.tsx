@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import styles from '../McpDashboard.module.css';
 import { ConnectConfig } from './types';
-import { nanoid } from 'nanoid';
 
 interface ConnectFormProps {
     onConnect: (config: ConnectConfig) => Promise<void>;
@@ -24,10 +23,8 @@ export default function ConnectForm({ onConnect, connecting, status, error }: Co
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        // Generate a fresh serverId for each connection attempt
-        const serverId = `server-${nanoid(6)}`;
+        // serverId is generated server-side
         await onConnect({
-            serverId,
             serverName,
             serverUrl,
             callbackUrl,

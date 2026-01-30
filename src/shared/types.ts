@@ -169,7 +169,7 @@ export interface McpRpcResponse<T = unknown> {
 
 // RPC Parameter Types
 export interface ConnectParams {
-  serverId: string;
+  serverId?: string; // Optional - generated server-side if not provided
   serverName: string;
   serverUrl: string;
   callbackUrl: string;

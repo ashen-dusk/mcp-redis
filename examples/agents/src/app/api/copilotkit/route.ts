@@ -36,7 +36,9 @@ export const POST = async (req: NextRequest) => {
   const clients = client.getClients();
   console.log(`[CopilotKit] Connected to ${clients.length} MCP clients`);
 
-  const adapter = new AguiAdapter(client);
+  const adapter = new AguiAdapter(client, {
+    // prefix: `mcp_tool`, //optionally set a prefix for tool names
+  });
 
   // Get tools with handlers for the middleware
   const mcpTools = await adapter.getTools();
@@ -47,11 +49,7 @@ export const POST = async (req: NextRequest) => {
    * Add MCP Tool Execution Middleware
    * This middleware intercepts MCP tool calls (server-*) and executes them server-side
    */
-  mcpAssistant.use(createMcpMiddleware(client, {
-    toolPrefix: 'server-',
-    tools: mcpTools,
-  }));
-
+  mcpAssistant.use(createMcpMiddleware({ tools: mcpTools, maxResultLength: 1000 })); // maxResult limits tool output length (dev environment)
   /**
    * Runtime
    */
