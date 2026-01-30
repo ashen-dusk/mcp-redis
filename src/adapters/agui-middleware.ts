@@ -312,7 +312,7 @@ export class McpMiddleware extends Middleware {
                     input.messages.push({
                         id: messageId,
                         role: 'tool',
-                        tool_call_id: toolCallId,
+                        toolCallId: toolCallId,
                         content: result,
                     } as any);
                 }
