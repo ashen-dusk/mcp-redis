@@ -96,6 +96,7 @@ export interface AguiTool {
     name: string;
     description: string;
     parameters?: Record<string, any>;
+    _meta?: Record<string, any>; // Add _meta to AguiTool
     handler?: (args: any) => any | Promise<any>;
 }
 
@@ -106,6 +107,7 @@ export interface AguiToolDefinition {
     name: string;
     description: string;
     parameters: Record<string, any>;
+    _meta?: Record<string, any>; // Add _meta to AguiToolDefinition
 }
 
 /**
@@ -164,24 +166,59 @@ export class AguiAdapter {
         const result = await client.listTools();
         const prefix = this.options.prefix ?? `tool_${client.getServerId() ?? 'mcp'}`;
 
-        return result.tools.map(tool => ({
-            name: `${prefix}_${tool.name}`,
-            description: tool.description || `Execute ${tool.name}`,
-            parameters: cleanSchema(tool.inputSchema),
-            handler: async (args: any) => {
-                console.log(`[AguiAdapter] Executing MCP tool: ${tool.name}`, args);
-                const result = await client.callTool(tool.name, args);
+        return result.tools.map(tool => {
+            // Type assertion to access _meta if it exists on the tool object (it comes from MCP SDK)
+            const mcpTool = tool as any;
+            return {
+                name: `${prefix}_${tool.name}`,
+                description: tool.description || `Execute ${tool.name}`,
+                parameters: cleanSchema(tool.inputSchema),
+                _meta: mcpTool._meta,
+                handler: async (args: any) => {
+                    console.log(`[AguiAdapter] Executing MCP tool: ${tool.name}`, args);
 
-                if (result.content && Array.isArray(result.content)) {
-                    const textContent = result.content
-                        .filter((c: any) => c.type === 'text')
-                        .map((c: any) => c.text)
-                        .join('\n');
-                    return textContent || result;
+                    // If the tool has UI metadata, we want to capture that in the result too ideally
+                    // But generally callTool returns CallToolResult which has 'content' and 'isError'
+                    const result = await client.callTool(tool.name, args);
+
+                    // If _meta exists, we might need to signify this to the caller (middleware)
+                    // The middleware typically stringifies the result. 
+                    // If we want to support MCP Apps, we should return the full result object including content
+                    // IF the middleware can handle objects.
+
+                    // For backward compatibility with simpler agents, we prefer text. 
+                    // BUT if it's an App tool, we MUST preserve structure if the middleware is to do anything with it.
+                    // However, the standard Adapter contract often expects a string return or simple JSON.
+
+                    // If the result has _meta (from the tool call itself? No, _meta is on the tool definition)
+                    // but the RESULT of the tool call might trigger the UI.
+                    // Actually the MCP Apps doc says: "When the host calls this tool, the UI is fetched and rendered, and the tool result is passed to it upon arrival."
+                    // So the tool definition's _meta tells the host "Hey, I have a UI".
+
+                    // So here we just need to return the result content. 
+                    // The Middleware needs to know about the tool's _meta to attach it to the result event?
+                    // Or the Agent client (Ag-UI) needs to see _meta in the tool definition.
+
+                    if (result.content && Array.isArray(result.content)) {
+                        // We return the raw content array so the middleware can decide how to format it
+                        // or if we must return a string:
+                        const textContent = result.content
+                            .filter((c: any) => c.type === 'text')
+                            .map((c: any) => c.text)
+                            .join('\n');
+
+                        // If there are other types (images, resources), we might be losing them if we just return text.
+                        // But for now let's stick to text for the main return, unless we change the Middleware to handle objects.
+                        // IMPORTANT: The AguiMiddleware.executeTool currently handles string | object.
+                        // implementation of executeTool: let resultStr = typeof result === 'string' ? result : JSON.stringify(result);
+
+                        // So we can return the whole result object!
+                        return result;
+                    }
+                    return result;
                 }
-                return result;
             }
-        }));
+        });
     }
 
     private async transformToolDefinitions(client: MCPClient): Promise<AguiToolDefinition[]> {
@@ -190,10 +227,14 @@ export class AguiAdapter {
         const result = await client.listTools();
         const prefix = this.options.prefix ?? `tool_${client.getServerId() ?? 'mcp'}`;
 
-        return result.tools.map(tool => ({
-            name: `${prefix}_${tool.name}`,
-            description: tool.description || `Execute ${tool.name}`,
-            parameters: cleanSchema(tool.inputSchema),
-        }));
+        return result.tools.map(tool => {
+            const mcpTool = tool as any;
+            return {
+                name: `${prefix}_${tool.name}`,
+                description: tool.description || `Execute ${tool.name}`,
+                parameters: cleanSchema(tool.inputSchema),
+                _meta: mcpTool._meta,
+            };
+        });
     }
 }

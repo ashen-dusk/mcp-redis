@@ -63,6 +63,7 @@ export class McpMiddleware extends Middleware {
             name: t.name,
             description: t.description,
             parameters: cleanSchema(t.parameters),
+            _meta: t._meta, // Include _meta in the tool definition passed to the agent
         }));
     }
 
@@ -99,8 +100,25 @@ export class McpMiddleware extends Middleware {
 
         try {
             console.log(`[McpMiddleware] Executing tool: ${toolName}`, args);
+            // Result can be a string (legacy) or an object (MCP Result with content array)
             const result = await tool.handler(args);
-            let resultStr = typeof result === 'string' ? result : JSON.stringify(result);
+
+            // If the result is an object (likely an MCP CallToolResult), we try to preserve it
+            // if it looks like it has content.
+            // However, the interface expects a string return for now in many agent implementations?
+            // The ToolResult interface in this file says `result: string`. 
+            // So we MUST stringify it if it's an object, but we want to keep the structure so the client can parse it.
+
+            let resultStr: string;
+
+            if (typeof result === 'string') {
+                resultStr = result;
+            } else if (result && typeof result === 'object') {
+                // It's likely an MCP Tool result object (content: [], isError: bool)
+                resultStr = JSON.stringify(result);
+            } else {
+                resultStr = String(result);
+            }
 
             if (resultStr.length > this.maxResultLength) {
                 const original = resultStr.length;
