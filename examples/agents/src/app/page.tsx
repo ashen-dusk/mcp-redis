@@ -4,7 +4,8 @@ import { useAgent } from "@copilotkit/react-core/v2";
 import { CopilotChat, CopilotKitCSSProperties } from "@copilotkit/react-ui";
 import { McpSidebar } from "@/components/mcp";
 import { ToolRenderer } from "@/components/ToolRenderer";
-import { useMcp, useMcpApp } from "@mcp-ts/sdk/client/react";
+import { useMcpApp } from "@mcp-ts/sdk/client/react";
+import { McpProvider, useMcpContext } from "@/components/mcp/mcp-provider";
 import { useEffect, useRef } from "react";
 import type { AgentSubscriber } from "@ag-ui/client";
 
@@ -19,14 +20,12 @@ const darkTheme: CopilotKitCSSProperties = {
   "--copilot-kit-muted-color": "#a1a1aa",
 };
 
-export default function CopilotKitPage() {
+function CopilotKitPageContent() {
   const iframeRef = useRef<HTMLIFrameElement>(null!);
 
-  // Connect to MCP server via SSEClient
-  const { client, connections } = useMcp({
-    url: '/api/mcp',
-    identity: 'demo-user-123',
-  });
+  // Use shared MCP context
+  const { client, mcpClient } = useMcpContext();
+  const { connections } = mcpClient;
 
   // Setup AppHost for MCP Apps (only when client is available)
   const { host } = useMcpApp(client!, iframeRef);
@@ -125,5 +124,13 @@ export default function CopilotKitPage() {
         />
       </div>
     </main>
+  );
+}
+
+export default function CopilotKitPage() {
+  return (
+    <McpProvider url="/api/mcp" identity="demo-user-123">
+      <CopilotKitPageContent />
+    </McpProvider>
   );
 }
