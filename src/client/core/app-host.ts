@@ -107,7 +107,9 @@ export class AppHost {
     public async launch(url: string, sessionId?: string) {
         if (sessionId) this.sessionId = sessionId;
 
-        if (url.startsWith('mcp-app://')) {
+        // MCP Apps are typically referenced via `ui://...` resource URIs.
+        // We also support legacy/custom `mcp-app://...` schemes.
+        if (url.startsWith('ui://') || url.startsWith('mcp-app://')) {
             await this.launchMcpApp(url);
         } else {
             this.iframe.src = url;

@@ -22,12 +22,18 @@ import { type AguiTool, cleanSchema } from './agui-adapter.js';
 
 /** New event type for MCP UI triggers */
 export const MCP_APP_UI_EVENT = 'mcp-apps-ui';
-// Use Omit to allow custom event type string
-export interface McpAppUiEvent extends Omit<BaseEvent, 'type'> {
-    type: typeof MCP_APP_UI_EVENT;
+/**
+ * MCP Apps UI trigger event.
+ *
+ * IMPORTANT: This must be emitted as an AG-UI CustomEvent so subscribers
+ * (e.g. CopilotKit `onCustomEvent`) can receive it.
+ */
+export interface McpAppUiEventPayload {
     toolCallId: string;
     resourceUri: string;
-    sessionId?: string; // Optional session ID from tool definition
+    sessionId?: string;
+    toolName: string;
+    result?: any;
 }
 
 /** Tool execution result for continuation */
@@ -253,22 +259,34 @@ export class McpMiddleware extends Middleware {
 
     private emitToolResults(observer: Subscriber<BaseEvent>, results: ToolResult[]): void {
         for (const { toolCallId, toolName, result, rawResult, messageId } of results) {
-            // Check for UI metadata in raw result
-            if (rawResult && rawResult._meta?.ui?.resourceUri) {
-                // Look up the tool definition to find session ID
-                const toolDef = this.tools.find(t => t.name === toolName);
-                const sessionId = toolDef?._meta?.sessionId;
+            // UI metadata may appear either on the tool CALL result (rawResult._meta)
+            // or only on the tool DEFINITION (listTools result). We support both.
+            const toolDef = this.tools.find(t => t.name === toolName);
+            const sessionId = toolDef?._meta?.sessionId;
+            const resourceUri =
+                rawResult?._meta?.ui?.resourceUri ??
+                rawResult?._meta?.['ui/resourceUri'] ??
+                toolDef?._meta?.ui?.resourceUri ??
+                toolDef?._meta?.['ui/resourceUri'];
 
-                const uiEvent: McpAppUiEvent = {
-                    type: MCP_APP_UI_EVENT,
+            if (resourceUri) {
+                const payload: McpAppUiEventPayload = {
                     toolCallId,
-                    resourceUri: rawResult._meta.ui.resourceUri,
-                    sessionId, // Inject session ID from definition
+                    resourceUri,
+                    sessionId,
+                    toolName,
+                    result: rawResult ?? result,
+                };
+
+                observer.next({
+                    type: EventType.CUSTOM,
+                    name: MCP_APP_UI_EVENT,
+                    value: payload,
                     timestamp: Date.now(),
-                    role: 'tool', // Optional, depends on BaseEvent definition
-                } as any;
-                observer.next(uiEvent as any);
-                console.log(`[McpMiddleware] Emitting ${MCP_APP_UI_EVENT} for: ${toolName} (session: ${sessionId})`);
+                    role: 'tool',
+                } as any);
+
+                console.log(`[McpMiddleware] Emitting CustomEvent(${MCP_APP_UI_EVENT}) for: ${toolName} (session: ${sessionId})`);
             }
 
             observer.next({

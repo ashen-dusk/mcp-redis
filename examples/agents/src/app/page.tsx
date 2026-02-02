@@ -31,13 +31,19 @@ function CopilotKitPageContent() {
   const { host } = useMcpApp(client!, iframeRef);
 
   // Get agent instance from CopilotKit
-  const { agent } = useAgent();
+  const { agent } = useAgent(
+    {
+      agentId: "mcpAssistant",
+    }
+  );
 
   /**
    * Subscribe to agent events to capture mcp-apps-ui custom events
    */
   useEffect(() => {
+    console.log("[Page] Setting up agent subscriber for MCP App events");
     if (!agent || !host) return;
+    console.log("[Page] Agent and AppHost are ready");
 
     const subscriber: AgentSubscriber = {
       onCustomEvent: ({ event }) => {
@@ -78,7 +84,7 @@ function CopilotKitPageContent() {
    */
   useEffect(() => {
     if (!host || connections.length === 0) return;
-
+  
     // Preload resources from all connected tools
     for (const connection of connections) {
       if (connection.tools.length > 0) {
@@ -97,22 +103,20 @@ function CopilotKitPageContent() {
         <ToolRenderer />
 
         {/* MCP App UI iframe - managed by AppHost */}
-        {connections.length > 0 && (
-          <div className="border-b border-gray-700 bg-gray-900 p-4">
-            <h3 className="text-sm font-semibold text-white mb-2">MCP App UI</h3>
-            <div className="border border-gray-700 rounded overflow-hidden">
-              <iframe
-                ref={iframeRef}
-                sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups"
-                className="w-full h-96 bg-white"
-                title="MCP App UI"
-              />
-            </div>
-            <p className="text-xs text-gray-500 mt-2">
-              Connected sessions: {connections.map((c) => c.serverName).join(', ')}
-            </p>
+        <div className="border-b border-gray-700 bg-gray-900 p-4">
+          <h3 className="text-sm font-semibold text-white mb-2">MCP App UI</h3>
+          <div className="border border-gray-700 rounded overflow-hidden">
+            <iframe
+              ref={iframeRef}
+              sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups"
+              className="w-full h-96 bg-white"
+              title="MCP App UI"
+            />
           </div>
-        )}
+          <p className="text-xs text-gray-500 mt-2">
+            Connected sessions: {connections.length ? connections.map((c) => c.serverName).join(", ") : "none"}
+          </p>
+        </div>
 
         <CopilotChat
           className="h-full"

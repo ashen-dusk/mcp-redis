@@ -164,25 +164,29 @@ export class AguiAdapter {
         if (!client.isConnected()) return [];
 
         const result = await client.listTools();
-        const prefix = this.options.prefix ?? `tool_${client.getServerId() ?? 'mcp'}`;
+        const serverId = (typeof (client as any).getServerId === 'function'
+            ? (client as any).getServerId()
+            : undefined) as string | undefined;
+        const normalizedPrefix = (this.options.prefix ?? serverId ?? 'mcp').replace(/-/g, '');
+        const prefix = `tool_${normalizedPrefix}`;
 
         return result.tools.map(tool => {
             // Type assertion to access _meta if it exists on the tool object (it comes from MCP SDK)
             const mcpTool = tool as any;
+            const mcpToolName = tool.name;
             return {
                 name: `${prefix}_${tool.name}`,
                 description: tool.description || `Execute ${tool.name}`,
                 parameters: cleanSchema(tool.inputSchema),
                 _meta: { ...mcpTool._meta, sessionId: (client as any).getSessionId?.() },
                 handler: async (args: any) => {
-                    console.log(`[AguiAdapter] Executing MCP tool: ${tool.name}`, args);
+                    console.log(`[AguiAdapter] Executing MCP tool: ${mcpToolName}`, args);
 
-                    if (result.content && Array.isArray(result.content)) {
-                        // We return the result object to support middleware that handles objects (like AguiMiddleware)
-                        // This preserves metadata like _meta for UI triggers.
-                        return result;
-                    }
-                    return result;
+                    // IMPORTANT: call the actual MCP tool. (Previously this mistakenly returned the listTools() result.)
+                    const callResult = await (client as any).callTool(mcpToolName, args ?? {});
+
+                    // Return the raw result object so middleware can inspect `_meta` (e.g. for UI triggers).
+                    return callResult;
                 }
             }
         });
@@ -192,7 +196,11 @@ export class AguiAdapter {
         if (!client.isConnected()) return [];
 
         const result = await client.listTools();
-        const prefix = this.options.prefix ?? `tool_${client.getServerId() ?? 'mcp'}`;
+        const serverId = (typeof (client as any).getServerId === 'function'
+            ? (client as any).getServerId()
+            : undefined) as string | undefined;
+        const normalizedPrefix = (this.options.prefix ?? serverId ?? 'mcp').replace(/-/g, '');
+        const prefix = `tool_${normalizedPrefix}`;
 
         return result.tools.map(tool => {
             const mcpTool = tool as any;
