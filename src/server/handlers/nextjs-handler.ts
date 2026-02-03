@@ -194,11 +194,11 @@ export function createNextMcpHandler(options: NextMcpHandlerOptions = {}) {
         );
       }
 
-      // Handle the request - response will be sent via SSE
-      await manager.handleRequest(body);
+      // Handle the request and return response directly (bypasses SSE latency)
+      const response = await manager.handleRequest(body);
 
-      // Return acknowledgment (actual response goes through SSE)
-      return Response.json({ acknowledged: true });
+      // Return the actual RPC response for immediate use by client
+      return Response.json(response);
     } catch (error) {
       return Response.json(
         {

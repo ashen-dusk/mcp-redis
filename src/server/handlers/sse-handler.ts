@@ -123,8 +123,9 @@ export class SSEConnectionManager {
 
   /**
    * Handle incoming RPC requests
+   * Returns the RPC response directly for immediate HTTP response (bypassing SSE latency)
    */
-  async handleRequest(request: McpRpcRequest): Promise<void> {
+  async handleRequest(request: McpRpcRequest): Promise<McpRpcResponse> {
     try {
       let result: SessionListResult | ConnectResult | DisconnectResult | RestoreSessionResult | FinishAuthResult | ListToolsRpcResult | ListPromptsResult | ListResourcesResult | unknown;
 
@@ -177,18 +178,28 @@ export class SSEConnectionManager {
           throw new Error(`Unknown method: ${request.method}`);
       }
 
-      this.sendEvent({
+      const response: McpRpcResponse = {
         id: request.id,
         result,
-      });
+      };
+
+      // Also send via SSE for backwards compatibility
+      this.sendEvent(response);
+
+      return response;
     } catch (error) {
-      this.sendEvent({
+      const errorResponse: McpRpcResponse = {
         id: request.id,
         error: {
           code: RpcErrorCodes.EXECUTION_ERROR,
           message: error instanceof Error ? error.message : 'Unknown error',
         },
-      });
+      };
+
+      // Also send via SSE for backwards compatibility
+      this.sendEvent(errorResponse);
+
+      return errorResponse;
     }
   }
 

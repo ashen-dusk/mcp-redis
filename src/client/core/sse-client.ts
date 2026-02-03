@@ -204,8 +204,8 @@ export class SSEClient implements AppHostClient {
   }
 
   /**
-   * Send RPC request via SSE
-   * Note: SSE is unidirectional (server->client), so we need to send requests via POST
+   * Send RPC request via HTTP POST
+   * Now returns response directly from HTTP (bypassing SSE latency)
    */
   private async sendRequest<T = unknown>(method: McpRpcMethod, params?: McpRpcParams): Promise<T> {
     // Wait for connection to be fully established
@@ -222,40 +222,55 @@ export class SSEClient implements AppHostClient {
       params,
     };
 
-    // Create promise for response
-    const promise = new Promise<T>((resolve, reject) => {
-      this.pendingRequests.set(id, { resolve: resolve as (value: unknown) => void, reject });
+    // Handle both relative and absolute URLs
+    const url = new URL(this.options.url, typeof window !== 'undefined' ? window.location.origin : undefined);
+    url.searchParams.set('identity', this.options.identity);
 
-      // Timeout (default 60s)
-      const timeoutMs = this.options.requestTimeout || 60000;
-      setTimeout(() => {
-        if (this.pendingRequests.has(id)) {
-          this.pendingRequests.delete(id);
-          reject(new Error(`Request timeout after ${timeoutMs}ms`));
-        }
-      }, timeoutMs);
+    // Send request via POST and get response directly
+    const response = await fetch(url.toString(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(this.options.authToken && { Authorization: `Bearer ${this.options.authToken}` }),
+      },
+      body: JSON.stringify(request),
     });
 
-    // Send request via POST to same endpoint
-    try {
-      // Handle both relative and absolute URLs
-      const url = new URL(this.options.url, typeof window !== 'undefined' ? window.location.origin : undefined);
-      url.searchParams.set('identity', this.options.identity);
-
-      await fetch(url.toString(), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(this.options.authToken && { Authorization: `Bearer ${this.options.authToken}` }),
-        },
-        body: JSON.stringify(request),
-      });
-    } catch (error) {
-      this.pendingRequests.delete(id);
-      throw error;
+    if (!response.ok) {
+      throw new Error(`HTTP error: ${response.status} ${response.statusText}`);
     }
 
-    return promise;
+    const data: McpRpcResponse = await response.json();
+
+    // Check for direct response (new fast path)
+    if ('result' in data) {
+      return data.result as T;
+    }
+
+    // Check for error response
+    if ('error' in data && data.error) {
+      throw new Error(data.error.message || 'Unknown RPC error');
+    }
+
+    // Legacy: If server only returned acknowledgment, fall back to SSE
+    // (This path is deprecated but kept for backwards compatibility)
+    if ('acknowledged' in data) {
+      return new Promise<T>((resolve, reject) => {
+        this.pendingRequests.set(id, { resolve: resolve as (value: unknown) => void, reject });
+
+        // Timeout (default 60s)
+        const timeoutMs = this.options.requestTimeout || 60000;
+        setTimeout(() => {
+          if (this.pendingRequests.has(id)) {
+            this.pendingRequests.delete(id);
+            reject(new Error(`Request timeout after ${timeoutMs}ms`));
+          }
+        }, timeoutMs);
+      });
+    }
+
+    // Unknown response format
+    throw new Error('Invalid RPC response format');
   }
 
   /**
