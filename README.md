@@ -1,9 +1,5 @@
 <div align="center">
-  <a href="https://github.com/zonlabs/mcp-ts">
-    <img src="docs/static/img/logo.svg" alt="mcp-ts Logo" width="80" height="80" />
-  </a>
-  <h1 align="center">@mcp-ts</h1>
-  <p>TypeScript SDK providing MCP capabilities to agents across JavaScript/cross-runtime environments.</p>
+  <img src="docs/static/img/mcp-ts-banner.svg" alt="MCP-TS Banner" width="100%" style="max-width: 1200px;" />
 </div>
 
 <div align="center">
@@ -44,8 +40,23 @@
 - **Agent Adapters** - Built-in adapters for AI SDK, LangChain, Mastra, and AG-UI
 - **MCP Apps Extension (SEP-1865)** - Interactive UI-driven tool interfaces
 
+## Examples
+
+Check out working examples demonstrating the MCP Apps extension and agent integrations in the [examples/agents](examples/agents) directory.
+
+> Examples MCP Apps referred from [modelcontextprotocol/ext-apps](https://github.com/modelcontextprotocol/ext-apps/tree/main/examples)
+
 <div align="center">
-  <img src="docs/static/img/mcp-apps.png" alt="MCP Apps" width="100%" />
+  <table cellspacing="5" cellpadding="0">
+    <tr>
+      <td width="50%">
+        <img src="docs/static/img/mcp-apps-img-1.png" alt="MCP Apps 1" width="100%" />
+      </td>
+      <td width="50%">
+        <img src="docs/static/img/mcp-apps-img-2.png" alt="MCP Apps 2" width="100%" />
+      </td>
+    </tr>
+  </table>
   <p><em>Interactive UIs for MCP tools</em></p>
 </div>
 
