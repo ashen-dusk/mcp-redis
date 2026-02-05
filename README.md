@@ -20,7 +20,7 @@
 
 <p align="center">
   <a href="https://www.npmjs.com/package/@mcp-ts/sdk">
-    <img src="https://badge.fury.io/js/@mcp-ts%2Fcore.svg" alt="npm version" />
+    <img src="https://img.shields.io/npm/v/@mcp-ts/sdk.svg" alt="npm version" />
   </a>
   <a href="https://opensource.org/licenses/MIT">
     <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT" />
@@ -310,7 +310,7 @@ For more details, refer to the documentation and follow the **installation guide
 
 ## Contributing
 
-Contributions are welcome! Please read [CLAUDE.md](./CLAUDE.md) for development guidelines.
+Contributions are welcome! Please read [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines on how to contribute.
 
 ## License
 
