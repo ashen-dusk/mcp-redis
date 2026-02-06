@@ -34,9 +34,9 @@ export interface McpAppIframeProps {
   toolStatus?: 'executing' | 'inProgress' | 'complete';
 
   /**
-   * SSE client instance (contains the iframe)
+   * SSE client instance for MCP operations
    */
-  client: SSEClient;
+  sseClient: SSEClient;
 }
 
 interface McpAppIframeResult {
@@ -77,7 +77,7 @@ interface McpAppIframeResult {
  *   toolInput: myInput,
  *   toolResult: myResult,
  *   toolStatus: "complete",
- *   client: sseClient,
+ *   sseClient: sseClient,
  * });
  *
  * return (
@@ -94,10 +94,10 @@ export function useMcpAppIframe({
   toolInput,
   toolResult,
   toolStatus,
-  client,
+  sseClient,
 }: McpAppIframeProps): McpAppIframeResult {
   const iframeRef = useRef<HTMLIFrameElement>(null!);
-  const { host, error: hostError } = useAppHost(client, iframeRef);
+  const { host, error: hostError } = useAppHost(sseClient, iframeRef);
 
   const [isLaunched, setIsLaunched] = useState(false);
   const [error, setError] = useState<Error | null>(null);

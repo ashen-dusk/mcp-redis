@@ -99,8 +99,8 @@ sequenceDiagram
     Note over User,Iframe: Phase 4: Component Rendering
     User->>McpAppTool: Render with app object
     McpAppTool->>useMcpAppIframe: Pass props (resourceUri, sessionId, etc)
-    useMcpAppIframe->>useAppHost: Initialize (client, iframeRef)
-    useAppHost->>AppHost: new AppHost(client, iframeRef)
+    useMcpAppIframe->>useAppHost: Initialize (sseClient, iframeRef)
+    useAppHost->>AppHost: new AppHost(sseClient, iframeRef)
     AppHost->>AppBridge: Initialize PostMessage bridge
     AppBridge-->>AppHost: Bridge ready
     useAppHost-->>useMcpAppIframe: Return { host, error }
@@ -291,9 +291,9 @@ For custom implementations, use the `useAppHost` hook directly:
 ```tsx
 import { useAppHost } from "@mcp-ts/sdk/client/react";
 
-function CustomMcpApp({ client, resourceUri, sessionId }) {
+function CustomMcpApp({ sseClient, resourceUri, sessionId }) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const { host, error } = useAppHost(client, iframeRef);
+  const { host, error } = useAppHost(sseClient, iframeRef);
 
   useEffect(() => {
     if (host) {

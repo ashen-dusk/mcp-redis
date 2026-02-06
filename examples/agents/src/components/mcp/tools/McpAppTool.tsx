@@ -37,7 +37,7 @@ export function McpAppTool({ app, toolInput, toolResult, toolStatus }: McpAppToo
         toolInput: toolInput ?? app.input,
         toolResult: toolResult ?? app.result,
         toolStatus: toolStatus ?? app.status,
-        client: mcpClient.client!,
+        sseClient: mcpClient.sseClient!,
     });
 
     if (error) {
