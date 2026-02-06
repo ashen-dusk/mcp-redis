@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState, Suspense, useMemo } from "react";
-import { useMcpApp } from "@mcp-ts/sdk/client/react";
+import { Suspense, useMemo } from "react";
+import { useMcpAppIframe } from "@mcp-ts/sdk/client/react";
 import { useMcpContext } from "../mcp-provider";
 
 interface McpAppToolProps {
@@ -38,8 +38,7 @@ function AppError({ message }: { message: string }) {
 }
 
 /**
- * The actual iframe component that loads immediately
- * The iframe renders right away, and launch happens in parallel
+ * The actual iframe component - handles UI with business logic from hook
  */
 function McpAppIframe({
     resourceUri,
@@ -47,63 +46,20 @@ function McpAppIframe({
     toolInput,
     toolResult,
     toolStatus,
-    onError
-}: McpAppToolProps & { onError: (err: Error) => void }) {
-    const iframeRef = useRef<HTMLIFrameElement>(null!);
+}: McpAppToolProps) {
     const { client } = useMcpContext();
-    const { host, error: hostError } = useMcpApp(client!, iframeRef);
-    const [isLaunched, setIsLaunched] = useState(false);
-    const launchAttemptedRef = useRef(false);
-    const toolInputSentRef = useRef(false);
-    const toolResultSentRef = useRef(false);
+    const { iframeRef, isLaunched, error } = useMcpAppIframe({
+        resourceUri,
+        sessionId,
+        toolInput,
+        toolResult,
+        toolStatus,
+        client: client!,
+    });
 
-    // Report host initialization errors
-    useEffect(() => {
-        if (hostError) {
-            onError(hostError);
-        }
-    }, [hostError, onError]);
-
-    // Launch the app as soon as host is ready
-    // The resource should already be preloaded, so this will be near-instant
-    useEffect(() => {
-        if (!host || !resourceUri || !sessionId || launchAttemptedRef.current) return;
-
-        launchAttemptedRef.current = true;
-
-        // Start launch immediately - don't await
-        // The preloaded resource cache means this resolves almost instantly
-        host.launch(resourceUri, sessionId)
-            .then(() => {
-                setIsLaunched(true);
-            })
-            .catch(err => {
-                console.error("[McpAppTool] Launch failed:", err);
-                onError(err instanceof Error ? err : new Error(String(err)));
-            });
-    }, [host, resourceUri, sessionId, onError]);
-
-    // Send tool input to the app when available
-    useEffect(() => {
-        if (!host || !isLaunched || !toolInput || toolInputSentRef.current) return;
-
-        toolInputSentRef.current = true;
-        host.sendToolInput(toolInput);
-    }, [host, isLaunched, toolInput]);
-
-    // Send tool result to the app when available
-    useEffect(() => {
-        if (!host || !isLaunched || toolResult === undefined || toolResultSentRef.current) return;
-        if (toolStatus !== "complete") return;
-
-        toolResultSentRef.current = true;
-
-        // Format result properly - wrap string results in content array
-        const formattedResult = typeof toolResult === 'string'
-            ? { content: [{ type: 'text', text: toolResult }] }
-            : toolResult;
-        host.sendToolResult(formattedResult);
-    }, [host, isLaunched, toolResult, toolStatus]);
+    if (error) {
+        return <AppError message={error.message} />;
+    }
 
     return (
         <div className="w-full border border-gray-700 rounded overflow-hidden bg-white min-h-96 my-2 relative">
@@ -127,27 +83,21 @@ function McpAppIframe({
 /**
  * MCP App Tool Component
  *
- * Renders an MCP App UI in a sandboxed iframe.
+ * Renders an MCP App UI in a sandboxed iframe with full control over styling.
  * Uses resource preloading for instant loading - the resource is fetched
  * when tools are discovered, not when the UI is rendered.
  *
- * Pattern follows basic-host example:
+ * Pattern:
  * 1. Render iframe immediately (don't wait for resource)
  * 2. Launch in parallel (resource should be preloaded)
- * 3. Show loading state via overlay, not by blocking render
+ * 3. Show loading state via overlay
  */
 export function McpAppTool({ resourceUri, sessionId, toolInput, toolResult, toolStatus }: McpAppToolProps) {
-    const [error, setError] = useState<Error | null>(null);
-
     // Memoize the key to prevent unnecessary re-renders
     const appKey = useMemo(
         () => `${sessionId}-${resourceUri}`,
         [sessionId, resourceUri]
     );
-
-    if (error) {
-        return <AppError message={error.message} />;
-    }
 
     return (
         <Suspense fallback={<AppLoadingSkeleton />}>
@@ -158,7 +108,6 @@ export function McpAppTool({ resourceUri, sessionId, toolInput, toolResult, tool
                 toolInput={toolInput}
                 toolResult={toolResult}
                 toolStatus={toolStatus}
-                onError={setError}
             />
         </Suspense>
     );
