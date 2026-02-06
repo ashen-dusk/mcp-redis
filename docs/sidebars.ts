@@ -18,34 +18,6 @@ const sidebars: SidebarsConfig = {
     'intro',
     'installation',
     'storage-backends',
-    {
-      type: 'category',
-      label: 'Frameworks',
-      collapsed: false,
-      items: [
-        {
-          type: 'doc',
-          id: 'nextjs',
-          className: 'sidebar-nextjs-link',
-        },
-        {
-          type: 'doc',
-          id: 'node-express',
-          label: 'Express.js',
-          className: 'sidebar-express-link',
-        },
-        {
-          type: 'doc',
-          id: 'react',
-          className: 'sidebar-react-link',
-        },
-        {
-          type: 'doc',
-          id: 'vue',
-          className: 'sidebar-vue-link',
-        },
-      ],
-    },
     'adapters',
     'agui-subscriber',
     'mcp-apps',

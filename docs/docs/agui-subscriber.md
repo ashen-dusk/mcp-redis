@@ -3,8 +3,6 @@ title: AG-UI Subscriber Pattern
 hide_title: true
 ---
 
-import { SiReact } from "react-icons/si";
-
 <h1><img src="/mcp-ts/img/agent-framework/agui.webp" height="32" style={{ verticalAlign: 'middle', marginRight: '10px', display: 'inline' }} /> AG-UI Subscriber Pattern</h1>
 
 Framework-agnostic event-driven system for handling MCP app rendering using AG-UI's subscriber pattern. Works with any AG-UI agent without depending on CopilotKit components.
