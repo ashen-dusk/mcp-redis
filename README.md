@@ -23,7 +23,7 @@
     <img src="https://img.shields.io/npm/v/@mcp-ts/sdk.svg" alt="npm version" />
   </a>
   <a href="https://zonlabs.github.io/mcp-ts/">
-    <img src="https://img.shields.io/badge/docs-website-blue.svg" alt="Documentation" />
+    <img src="https://img.shields.io/badge/docs-website-brightgreen.svg" alt="Documentation" />
   </a>
   <a href="https://opensource.org/licenses/MIT">
     <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT" />
