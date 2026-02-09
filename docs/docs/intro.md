@@ -52,6 +52,7 @@ Understanding these pieces will help you build faster:
 3. **Client Hook** — The frontend composable/hook that manages the SSE connection and tool calls.
 4. **Adapters** — Transform MCP tools into framework-specific formats. See [Adapters](./adapters.md).
 5. **AG-UI Middleware** — Execute MCP tools server-side when using remote agents. See [AG-UI Middleware](./adapters.md#ag-ui-middleware).
+6. **MCP Apps** — Render interactive UI components from MCP servers. See [MCP Apps](./mcp-apps.md).
 
 ## Next Steps
 

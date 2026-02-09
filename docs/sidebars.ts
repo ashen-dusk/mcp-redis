@@ -19,7 +19,6 @@ const sidebars: SidebarsConfig = {
     'installation',
     'storage-backends',
     'adapters',
-    'agui-subscriber',
     'mcp-apps',
     'api-reference',
   ],
