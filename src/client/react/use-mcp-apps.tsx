@@ -1,8 +1,7 @@
 /**
- * Simplified MCP Apps Hook - Fixed for no flickering
+ * MCP Apps Hook
  *
- * The key insight: React component identity must be stable.
- * We return a stable McpAppRenderer component and separate metadata lookup.
+ * Provides utilities for rendering interactive UI components from MCP servers.
  */
 
 import React, { useState, useEffect, useCallback, useRef, memo } from 'react';
@@ -45,8 +44,7 @@ interface McpAppRendererProps {
 }
 
 /**
- * Stable renderer component - memoized to prevent flickering
- * Uses refs to track data changes and send updates to the iframe
+ * Internal component that renders the MCP app in a sandboxed iframe
  */
 const McpAppRenderer = memo(function McpAppRenderer({
   metadata,
