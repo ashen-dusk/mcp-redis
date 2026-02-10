@@ -1,8 +1,8 @@
 {
-    "name": "@modelcontextprotocol/server-basic-react",
-    "version": "1.0.1",
+    "name": "@modelcontextprotocol/server-mcp-ts-docs",
+    "version": "1.0.0",
     "type": "module",
-    "description": "Basic MCP App Server example using React",
+    "description": "MCP App Server for mcp-ts documentation search and feedback",
     "repository": {
         "type": "git",
         "url": "https://github.com/modelcontextprotocol/ext-apps",
@@ -12,7 +12,7 @@
     "main": "dist/server.js",
     "types": "dist/server.d.ts",
     "bin": {
-        "mcp-server-basic-react": "dist/index.js"
+        "mcp-server-mcp-ts-docs": "dist/index.js"
     },
     "files": [
         "dist"

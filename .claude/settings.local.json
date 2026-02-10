@@ -11,7 +11,27 @@
       "Bash(ls:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(npx create-docusaurus@latest docs classic --typescript)"
+      "Bash(npx create-docusaurus@latest docs classic --typescript)",
+      "Bash(npx tsc:*)",
+      "WebFetch(domain:docs.copilotkit.ai)",
+      "Bash(powershell -Command:*)",
+      "Read(//c/Users/Harish_Mehta/Downloads/**)",
+      "Bash(node -e \"const fs=require\\(''fs''\\);const code=fs.readFileSync\\(''c:/Users/Harish_Mehta/Desktop/my_dirs/workspace/mcp-ts/examples/agents/node_modules/@ag-ui/langgraph/dist/index.js'',''utf8''\\);const match=code.match\\(/handleSingleEvent\\\\\\(t\\\\\\)\\\\{[^}]+on_chat_model_stream[^}]+tool_call_chunks[^}]{0,2000}/\\);console.log\\(match ? match[0].substring\\(0,1500\\) : ''not found''\\)\")",
+      "Bash(npx patch-package:*)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:www.npmjs.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(curl:*)",
+      "Bash(dir:*)",
+      "WebFetch(domain:blog.modelcontextprotocol.io)",
+      "Bash(git push:*)",
+      "Bash(where:*)",
+      "Bash(npm ls:*)",
+      "Bash(\"c:\\\\Users\\\\Harish_Mehta\\\\Desktop\\\\my_dirs\\\\workspace\\\\mcp-ts\\\\src\\\\client\\\\react\\\\AGUI_SUBSCRIBER.md\" << 'DOCEOF'\n# AG-UI Subscriber Pattern for MCP Apps\n\nThis module provides a **framework-agnostic** event-driven system for handling MCP app rendering using AG-UI's subscriber pattern. It works with any AG-UI agent without depending on CopilotKit components.\n\n## Overview\n\nThe AG-UI subscriber pattern allows you to listen to agent events \\(tool calls, custom events, state changes\\) regardless of what UI framework you're using. This makes MCP apps portable across different agent implementations.\n\n## Architecture\n\n```\n┌─────────────────────────────────────────────────────────────┐\n│                      AG-UI Agent                             │\n│  \\(HttpAgent, LangGraphAgent, or custom implementation\\)      │\n└────────────────┬────────────────────────────────────────────┘\n                 │\n                 │ agent.subscribe\\(subscriber\\)\n                 │\n┌────────────────▼────────────────────────────────────────────┐\n│              createMcpAppSubscriber\\(\\)                        │\n│  • Listens for 'mcp-apps-ui' custom events                  │\n│  • Tracks tool call lifecycle \\(start/args/end/result\\)       │\n│  • Framework-agnostic event handlers                         │\n└────────────────┬────────────────────────────────────────────┘\n                 │\n                 │ Event callbacks\n                 │\n┌────────────────▼────────────────────────────────────────────┐\n│         Your Application \\(React, Vue, Svelte, etc.\\)         │\n│  • Render MCP apps based on events                          │\n│  • Display tool call status                                 │\n│  • Custom UI logic                                           │\n└─────────────────────────────────────────────────────────────┘\n```\n\n## Core Concepts\n\n### 1. **McpAppEvent**\nEvents emitted by the middleware when a tool with UI metadata is executed:\n\n```typescript\ninterface McpAppEvent {\n  toolCallId: string;      // Unique ID for this tool call\n  resourceUri: string;     // URL of the MCP app to load\n  sessionId?: string;      // MCP session ID\n  toolName: string;        // Name of the tool \\(base name, not prefixed\\)\n  result?: any;           // Tool execution result\n  input?: Record<string, unknown>; // Tool input arguments\n  status?: 'executing' | 'inProgress' | 'complete';\n}\n```\n\n### 2. **AgentSubscriber**\nAG-UI's subscriber interface with lifecycle hooks:\n- `onCustomEvent` - Listen for custom events \\(like 'mcp-apps-ui'\\)\n- `onToolCallStartEvent` - Tool call initiated\n- `onToolCallArgsEvent` - Tool arguments received\n- `onToolCallEndEvent` - Tool call completed\n- `onToolCallResultEvent` - Tool result received\n\n### 3. **Tool Name Handling**\nThe system transparently handles both base and prefixed tool names:\n- **Base names**: `\"get-time\"` \\(from MCP server\\)\n- **Prefixed names**: `\"tool_abc123_get-time\"` \\(from CopilotKit/AG-UI\\)\n- A JavaScript Proxy automatically handles both formats when looking up apps\n\nDOCEOF)",
+      "Bash(git mv:*)",
+      "Bash(git diff:*)",
+      "Bash(npm run dev:*)",
+      "Bash(grep:*)"
     ]
   }
 }

@@ -15,25 +15,40 @@ const ToolCallRenderer: React.FC<RenderProps> = (props) => {
   // Get metadata - this is fast and looks up current connections
   const metadata = getAppMetadata(name);
 
-  // If no MCP app found for this tool, return null
+  // Normalize status
+  const normalizedStatus = status === "complete" || status === "inProgress" || status === "executing" 
+    ? status 
+    : "executing";
+
+  // If no MCP app found for this tool, render the default MCPToolCall view only
   if (!metadata) {
-    return null;
+    return (
+      <MCPToolCall 
+        name={name}
+        args={args} 
+        result={result} 
+        status={normalizedStatus} 
+      />
+    );
   }
 
-  // Render the stable component with changing data as props
+  // Render both MCPToolCall (for debugging) and McpAppRenderer (for UI)
   // McpAppRenderer is memoized to prevent flickering
   return (
     <>
-    <MCPToolCall args={args} result={result} status={status} />
-    <McpAppRenderer
-      metadata={metadata}
-      input={args}
-      result={result}
-      status={status === "complete" || status === "inProgress" || status === "executing" 
-        ? status 
-        : "executing"}
+      <MCPToolCall 
+        name={name}
+        args={args} 
+        result={result} 
+        status={normalizedStatus} 
+      />
+      <McpAppRenderer
+        metadata={metadata}
+        input={args}
+        result={result}
+        status={normalizedStatus}
         sseClient={mcpClient?.sseClient}
-        />
+      />
     </>
   );
 };
