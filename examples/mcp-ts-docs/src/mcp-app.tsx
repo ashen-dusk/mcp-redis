@@ -30,12 +30,197 @@ interface ToolInput {
   toolName?: string;
 }
 
+// Standalone UI component for when AppBridge is not available
+interface StandaloneUIProps {
+  activeTab: "search" | "feedback";
+  setActiveTab: (tab: "search" | "feedback") => void;
+}
+
+function StandaloneUI({ activeTab, setActiveTab }: StandaloneUIProps) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [localResults, setLocalResults] = useState<SearchResults | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
+  
+  // Documentation index for client-side search
+  const DOC_INDEX = [
+    {
+      title: "Getting Started with mcp-ts",
+      description: "Introduction to the mcp-ts library, including installation, core concepts, and quick start guide.",
+      link: "https://zonlabs.github.io/mcp-ts/",
+      keywords: ["intro", "getting started", "overview", "quick start", "installation"]
+    },
+    {
+      title: "Installation Guide",
+      description: "Step-by-step installation instructions for @mcp-ts/sdk, including prerequisites and storage backend configuration.",
+      link: "https://zonlabs.github.io/mcp-ts/docs/installation",
+      keywords: ["install", "npm", "package", "setup", "configuration", "typescript"]
+    },
+    {
+      title: "Storage Backends",
+      description: "Detailed guide on Redis, File System, SQLite, and In-Memory storage backends with configuration examples.",
+      link: "https://zonlabs.github.io/mcp-ts/docs/storage-backends",
+      keywords: ["storage", "redis", "file", "sqlite", "memory", "persistence", "session"]
+    },
+    {
+      title: "React Integration",
+      description: "How to use the useMcp hook in React applications, including connection management and tool calling.",
+      link: "https://zonlabs.github.io/mcp-ts/docs/react",
+      keywords: ["react", "hooks", "usemcp", "frontend", "ui", "connection"]
+    },
+    {
+      title: "API Reference",
+      description: "Complete API documentation for server-side and client-side classes, methods, and types.",
+      link: "https://zonlabs.github.io/mcp-ts/docs/api-reference",
+      keywords: ["api", "reference", "documentation", "methods", "classes", "types"]
+    },
+  ];
+  
+  const performSearch = (query: string) => {
+    const normalizedQuery = query.toLowerCase();
+    return DOC_INDEX.filter(doc => {
+      const inTitle = doc.title.toLowerCase().includes(normalizedQuery);
+      const inDescription = doc.description.toLowerCase().includes(normalizedQuery);
+      const inKeywords = doc.keywords.some(k => k.toLowerCase().includes(normalizedQuery));
+      return inTitle || inDescription || inKeywords;
+    }).map(doc => ({
+      title: doc.title,
+      description: doc.description,
+      link: doc.link
+    }));
+  };
+  
+  const handleSearch = () => {
+    if (!searchQuery.trim()) return;
+    setIsSearching(true);
+    
+    // Simulate async search
+    setTimeout(() => {
+      const results = performSearch(searchQuery);
+      setLocalResults({
+        query: searchQuery,
+        results,
+        count: results.length
+      });
+      setIsSearching(false);
+    }, 300);
+  };
+  
+  return (
+    <main className={styles.main}>
+      <header className={styles.header}>
+        <h1 className={styles.title}>mcp-ts Documentation</h1>
+        <p className={styles.subtitle}>Standalone Mode - Direct Search</p>
+        <div className={styles.badgeContainer}>
+          <span style={{ color: '#f59e0b', fontSize: '14px' }}>⚠️ Running without MCP connection</span>
+        </div>
+      </header>
+
+      <nav className={styles.tabNav}>
+        <button
+          className={`${styles.tabButton} ${activeTab === "search" ? styles.tabActive : ""}`}
+          onClick={() => setActiveTab("search")}
+        >
+          Search Docs
+        </button>
+        <button
+          className={`${styles.tabButton} ${activeTab === "feedback" ? styles.tabActive : ""}`}
+          onClick={() => setActiveTab("feedback")}
+        >
+          Submit Feedback
+        </button>
+      </nav>
+
+      {activeTab === "search" && (
+        <section className={styles.section}>
+          <div className={styles.searchBox}>
+            <input
+              type="text"
+              className={styles.searchInput}
+              placeholder="Search documentation..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+            />
+            <button 
+              className={styles.searchButton}
+              onClick={handleSearch}
+              disabled={isSearching || !searchQuery.trim()}
+            >
+              {isSearching ? "Searching..." : "Search"}
+            </button>
+          </div>
+
+          {localResults && (
+            <div className={styles.resultsContainer}>
+              <p className={styles.resultsInfo}>
+                Found {localResults.count} result{localResults.count !== 1 ? "s" : ""} for &quot;{localResults.query}&quot;
+              </p>
+              
+              {localResults.results.length > 0 ? (
+                <ul className={styles.resultsList}>
+                  {localResults.results.map((result, index) => (
+                    <li key={index} className={styles.resultItem}>
+                      <h3 className={styles.resultTitle}>{result.title}</h3>
+                      <p className={styles.resultDescription}>{result.description}</p>
+                      <a 
+                        href={result.link} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className={styles.resultLink}
+                      >
+                        View Documentation →
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className={styles.noResults}>
+                  <p>No results found. Try different keywords.</p>
+                </div>
+              )}
+            </div>
+          )}
+        </section>
+      )}
+
+      {activeTab === "feedback" && (
+        <section className={styles.section}>
+          <div className={styles.feedbackIntro}>
+            <p>Feedback submission requires MCP connection. Please use the full MCP app.</p>
+          </div>
+        </section>
+      )}
+    </main>
+  );
+}
+
 function DocsApp() {
   const [activeTab, setActiveTab] = useState<"search" | "feedback">("search");
   const [hostContext, setHostContext] = useState<McpUiHostContext | undefined>();
   const [toolResult, setToolResult] = useState<CallToolResult | null>(null);
   const [initialInput, setInitialInput] = useState<ToolInput | null>(null);
+  const [isStandalone, setIsStandalone] = useState(false);
+  const [connectionTimeout, setConnectionTimeout] = useState(false);
   const isInitializedRef = useRef(false);
+
+  // Check if we're in standalone mode (not in iframe)
+  useEffect(() => {
+    // If window.parent === window, we're not in an iframe
+    const inIframe = window.parent !== window;
+    console.log("Running in iframe:", inIframe);
+    
+    if (!inIframe) {
+      console.log("Standalone mode detected - no AppBridge available");
+      setIsStandalone(true);
+    }
+    
+    // Set a timeout to detect connection issues
+    const timeout = setTimeout(() => {
+      setConnectionTimeout(true);
+    }, 5000);
+    
+    return () => clearTimeout(timeout);
+  }, []);
 
   const { app, error } = useApp({
     appInfo: { name: "mcp-ts Docs App", version: "1.0.0" },
@@ -88,7 +273,25 @@ function DocsApp() {
   }, [app]);
 
   if (error) return <div><strong>ERROR:</strong> {error.message}</div>;
-  if (!app) return <div>Connecting to mcp-ts Docs...</div>;
+  
+  // Show standalone UI when not in iframe or connection timeout
+  if ((isStandalone || connectionTimeout) && !app) {
+    return (
+      <StandaloneUI 
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+      />
+    );
+  }
+  
+  if (!app) return (
+    <div style={{ padding: '20px', textAlign: 'center' }}>
+      <p>Connecting to mcp-ts Docs...</p>
+      <p style={{ fontSize: '12px', color: '#666', marginTop: '10px' }}>
+        If this takes too long, the app may be running in standalone mode.
+      </p>
+    </div>
+  );
 
   return (
     <DocsAppInner 
@@ -431,6 +634,7 @@ function DocsAppInner({ app, activeTab, setActiveTab, toolResult, initialInput, 
     </main>
   );
 }
+
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
