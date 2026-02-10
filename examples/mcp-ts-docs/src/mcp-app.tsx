@@ -4,7 +4,7 @@
 import type { App, McpUiHostContext } from "@modelcontextprotocol/ext-apps";
 import { useApp } from "@modelcontextprotocol/ext-apps/react";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
-import { StrictMode, useCallback, useEffect, useState, useMemo } from "react";
+import { StrictMode, useCallback, useEffect, useState, useMemo, useRef, Component, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import styles from "./mcp-app.module.css";
 
@@ -29,6 +29,9 @@ interface ToolInput {
   };
   toolName?: string;
 }
+
+// Connection timeout in milliseconds
+const CONNECTION_TIMEOUT = 5000;
 
 // Check if running in iframe
 const isInIframe = typeof window !== 'undefined' && window.parent !== window;
@@ -79,6 +82,39 @@ function performSearch(query: string): DocResult[] {
     description: doc.description,
     link: doc.link
   }));
+}
+
+// Error Boundary to catch React commit errors
+interface ErrorBoundaryProps {
+  children: ReactNode;
+  fallback: ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
+class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error("McpConnectedUI Error Boundary caught error:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback;
+    }
+    return this.props.children;
+  }
 }
 
 // Standalone UI for when AppBridge is not available
@@ -192,7 +228,76 @@ function StandaloneUI() {
   );
 }
 
-// MCP-connected UI
+// Safe wrapper for useApp that handles errors gracefully
+function useSafeApp() {
+  const [connectionState, setConnectionState] = useState<'connecting' | 'connected' | 'error' | 'timeout'>('connecting');
+  const [connectionError, setConnectionError] = useState<Error | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isMountedRef = useRef(true);
+
+  // Clear timeout on unmount
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Set up timeout
+  useEffect(() => {
+    timeoutRef.current = setTimeout(() => {
+      if (isMountedRef.current && connectionState === 'connecting') {
+        console.warn('MCP connection timed out, falling back to standalone mode');
+        setConnectionState('timeout');
+      }
+    }, CONNECTION_TIMEOUT);
+
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, [connectionState]);
+
+  // Call useApp with error handling
+  let appResult: ReturnType<typeof useApp>;
+  try {
+    appResult = useApp({
+      appInfo: { name: "mcp-ts Docs App", version: "1.0.0" },
+      capabilities: {},
+    });
+  } catch (err) {
+    console.error('useApp hook threw error:', err);
+    if (isMountedRef.current && connectionState === 'connecting') {
+      setConnectionState('error');
+      setConnectionError(err instanceof Error ? err : new Error(String(err)));
+    }
+    return { app: null, error: err instanceof Error ? err : new Error(String(err)), connectionState: 'error' as const };
+  }
+
+  const { app, error: appError } = appResult;
+
+  // Update connection state based on app/error changes
+  useEffect(() => {
+    if (!isMountedRef.current) return;
+    
+    if (appError && connectionState === 'connecting') {
+      setConnectionState('error');
+      setConnectionError(appError);
+    } else if (app && connectionState === 'connecting') {
+      setConnectionState('connected');
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    }
+  }, [app, appError, connectionState]);
+
+  return { app, error: connectionError || appError, connectionState };
+}
+
+// MCP-connected UI with proper error handling
 function McpConnectedUI() {
   const [activeTab, setActiveTab] = useState<"search" | "feedback">("search");
   const [hostContext, setHostContext] = useState<McpUiHostContext | undefined>();
@@ -200,40 +305,75 @@ function McpConnectedUI() {
   const [initialInput, setInitialInput] = useState<ToolInput | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   
-  const { app, error } = useApp({
-    appInfo: { name: "mcp-ts Docs App", version: "1.0.0" },
-    capabilities: {},
-  });
+  const { app, error, connectionState } = useSafeApp();
 
+  // Safe initialization with useEffect - no state updates during render
   useEffect(() => {
-    if (app && !isInitialized) {
+    if (!app || isInitialized) return;
+
+    // Use setTimeout to defer state updates to next tick
+    const initTimeout = setTimeout(() => {
       setIsInitialized(true);
-      const context = app.getHostContext();
-      setHostContext(context);
+      
+      try {
+        const context = app.getHostContext();
+        setHostContext(context);
+      } catch (e) {
+        console.error('Failed to get host context:', e);
+      }
       
       // Set up event handlers
       app.ontoolinput = async (input) => {
         console.info("Received tool call input:", input);
         if (input?.arguments?.query || input?.arguments?.feedback) {
-          setInitialInput(input as ToolInput);
+          // Use setTimeout to ensure state update happens outside render cycle
+          setTimeout(() => {
+            setInitialInput(input as ToolInput);
+          }, 0);
         }
       };
       
       app.ontoolresult = async (result) => {
         console.info("Received tool call result:", result);
-        setToolResult(result);
+        // Use setTimeout to ensure state update happens outside render cycle
+        setTimeout(() => {
+          setToolResult(result);
+        }, 0);
       };
       
-      app.onerror = console.error;
-    }
+      app.onerror = (err: Error) => {
+        console.error("App error:", err);
+      };
+    }, 0);
+
+    return () => {
+      clearTimeout(initTimeout);
+    };
   }, [app, isInitialized]);
 
-  if (error) return <div><strong>ERROR:</strong> {error.message}</div>;
-  if (!app) return (
-    <div style={{ padding: '20px', textAlign: 'center' }}>
-      <p>Connecting to mcp-ts Docs...</p>
-    </div>
-  );
+  // Handle timeout/error - fallback to standalone
+  if (connectionState === 'timeout' || connectionState === 'error') {
+    console.warn('MCP connection failed or timed out, rendering standalone UI');
+    return <StandaloneUI />;
+  }
+
+  // Show loading state while connecting
+  if (connectionState === 'connecting' || !app) {
+    return (
+      <div style={{ padding: '20px', textAlign: 'center' }}>
+        <p>Connecting to mcp-ts Docs...</p>
+        <p style={{ fontSize: '12px', color: '#666', marginTop: '10px' }}>
+          This may take a few seconds. Will fallback to standalone mode if connection fails.
+        </p>
+      </div>
+    );
+  }
+
+  // Show error if any
+  if (error) {
+    console.error('MCP App error:', error);
+    return <StandaloneUI />;
+  }
 
   return (
     <DocsAppInner 
@@ -521,7 +661,11 @@ function DocsApp() {
     return <StandaloneUI />;
   }
   
-  return <McpConnectedUI />;
+  return (
+    <ErrorBoundary fallback={<StandaloneUI />}>
+      <McpConnectedUI />
+    </ErrorBoundary>
+  );
 }
 
 createRoot(document.getElementById("root")!).render(
