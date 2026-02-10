@@ -32,8 +32,8 @@
         "prepublishOnly": "npm run build"
     },
     "dependencies": {
-        "@mcp-ts/ext-apps": "^1.0.0",
-        "@mcp-ts/sdk": "^1.24.0",
+        "@modelcontextprotocol/ext-apps": "^1.0.0",
+        "@modelcontextprotocol/sdk": "^1.24.0",
         "cors": "^2.8.5",
         "express": "^5.1.0",
         "react": "^19.2.0",
@@ -46,6 +46,7 @@
         "@types/node": "22.10.0",
         "@types/react": "^19.2.2",
         "@types/react-dom": "^19.2.2",
+        "@vercel/node": "^3.0.0",
         "@vitejs/plugin-react": "^4.3.4",
         "concurrently": "^9.2.1",
         "cross-env": "^10.1.0",
