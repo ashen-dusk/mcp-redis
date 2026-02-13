@@ -88,6 +88,8 @@ export type McpConnectionEvent =
     sessionId: string;
     serverId: string;
     serverName: string;
+    serverUrl: string;
+    createdAt?: number;
     state: McpConnectionState;
     previousState: McpConnectionState;
     timestamp: number;

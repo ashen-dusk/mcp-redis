@@ -225,6 +225,7 @@ export class SSEConnectionManager {
         serverName: s.serverName,
         serverUrl: s.serverUrl,
         transport: s.transportType,
+        createdAt: s.createdAt,
       })),
     };
   }
@@ -260,6 +261,7 @@ export class SSEConnectionManager {
       sessionId,
       serverId,
       serverName,
+      serverUrl,
       state: 'CONNECTING',
       previousState: 'DISCONNECTED',
       timestamp: Date.now(),
@@ -433,6 +435,7 @@ export class SSEConnectionManager {
       sessionId,
       serverId: session.serverId ?? 'unknown',
       serverName: session.serverName ?? 'Unknown',
+      serverUrl: session.serverUrl,
       state: 'VALIDATING',
       previousState: 'DISCONNECTED',
       timestamp: Date.now(),
@@ -495,6 +498,7 @@ export class SSEConnectionManager {
       sessionId,
       serverId: session.serverId ?? 'unknown',
       serverName: session.serverName ?? 'Unknown',
+      serverUrl: session.serverUrl,
       state: 'AUTHENTICATING',
       previousState: 'DISCONNECTED',
       timestamp: Date.now(),

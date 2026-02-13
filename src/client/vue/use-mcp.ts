@@ -69,7 +69,7 @@ export interface McpConnection {
     state: McpConnectionState;
     tools: ToolInfo[];
     error?: string;
-    connectedAt?: Date;
+    createdAt?: Date;
 }
 
 export interface McpClient {
@@ -215,11 +215,17 @@ export function useMcp(options: UseMcpOptions): McpClient {
                     const index = connections.value.indexOf(existing);
                     connections.value[index] = { ...existing, state: event.state };
                 } else {
+                    // Fix: Don't add back disconnected sessions that were just removed
+                    if (event.state === 'DISCONNECTED') {
+                        break;
+                    }
+
                     connections.value = [...connections.value, {
                         sessionId: event.sessionId,
                         serverId: event.serverId,
                         serverName: event.serverName,
                         state: event.state,
+                        createdAt: event.createdAt ? new Date(event.createdAt) : undefined,
                         tools: [],
                     }];
                 }
@@ -288,6 +294,7 @@ export function useMcp(options: UseMcpOptions): McpClient {
                     serverUrl: s.serverUrl,
                     transport: s.transport,
                     state: 'VALIDATING' as McpConnectionState,
+                    createdAt: new Date(s.createdAt),
                     tools: [],
                 }));
             }

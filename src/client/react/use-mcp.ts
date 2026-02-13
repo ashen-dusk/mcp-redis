@@ -75,7 +75,7 @@ export interface McpConnection {
   state: McpConnectionState;
   tools: ToolInfo[];
   error?: string;
-  connectedAt?: Date;
+  createdAt?: Date;
 }
 
 export interface McpClient {
@@ -285,7 +285,9 @@ export function useMcp(options: UseMcpOptions): McpClient {
                 sessionId: event.sessionId,
                 serverId: event.serverId,
                 serverName: event.serverName,
+                serverUrl: event.serverUrl,
                 state: event.state,
+                createdAt: event.createdAt ? new Date(event.createdAt) : undefined,
                 tools: [],
               },
             ];
@@ -357,6 +359,7 @@ export function useMcp(options: UseMcpOptions): McpClient {
             serverUrl: s.serverUrl,
             transport: s.transport,
             state: 'VALIDATING' as McpConnectionState,
+            createdAt: new Date(s.createdAt),
             tools: [],
           }))
         );

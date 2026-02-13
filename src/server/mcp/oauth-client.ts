@@ -109,6 +109,7 @@ export class MCPClient {
   private clientUri?: string;
   private logoUri?: string;
   private policyUri?: string;
+  private createdAt?: number;
 
 
   /** Event emitters for connection lifecycle */
@@ -162,6 +163,8 @@ export class MCPClient {
       sessionId: this.sessionId,
       serverId: this.serverId,
       serverName: this.serverName || this.serverId,
+      serverUrl: this.serverUrl || '',
+      createdAt: this.createdAt,
       state: newState,
       previousState,
       timestamp: Date.now(),
@@ -302,6 +305,7 @@ export class MCPClient {
       this.serverName = this.serverName || sessionData.serverName;
       this.serverId = this.serverId || sessionData.serverId || 'unknown';
       this.headers = this.headers || sessionData.headers;
+      this.createdAt = sessionData.createdAt;
     }
 
     if (!this.serverUrl || !this.callbackUrl || !this.serverId) {
@@ -369,6 +373,7 @@ export class MCPClient {
     // will call saveCodeVerifier() which requires the session to exist
     const existingSession = await storage.getSession(this.identity, this.sessionId);
     if (!existingSession && this.serverId && this.serverUrl && this.callbackUrl) {
+      this.createdAt = Date.now();
       console.log(`[MCPClient] Creating initial session ${this.sessionId} for OAuth flow`);
       await storage.createSession({
         sessionId: this.sessionId,
@@ -378,7 +383,7 @@ export class MCPClient {
         serverUrl: this.serverUrl,
         callbackUrl: this.callbackUrl,
         transportType: this.transportType || 'streamable_http',
-        createdAt: Date.now(),
+        createdAt: this.createdAt,
       }, Math.floor(STATE_EXPIRATION_MS / 1000)); // Short TTL until connection succeeds
     }
   }
@@ -394,6 +399,11 @@ export class MCPClient {
       return;
     }
 
+    // Ensure createdAt is always set
+    if (!this.createdAt) {
+      this.createdAt = Date.now();
+    }
+
     const sessionData = {
       sessionId: this.sessionId,
       identity: this.identity,
@@ -402,7 +412,7 @@ export class MCPClient {
       serverUrl: this.serverUrl,
       callbackUrl: this.callbackUrl,
       transportType: this.transportType || 'streamable_http' as TransportType,
-      createdAt: Date.now(),
+      createdAt: this.createdAt,
     };
 
     // Try to update first, create if doesn't exist
