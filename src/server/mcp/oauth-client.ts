@@ -2,13 +2,11 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { nanoid } from 'nanoid';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
-import { Transport } from '@modelcontextprotocol/sdk/shared/transport.js'; /** Import base Transport type */
 import {
   UnauthorizedError as SDKUnauthorizedError,
   refreshAuthorization,
   discoverOAuthProtectedResourceMetadata,
   discoverAuthorizationServerMetadata,
-  auth
 } from '@modelcontextprotocol/sdk/client/auth.js';
 import {
   ListToolsRequest,
@@ -38,6 +36,8 @@ import { UnauthorizedError } from '../../shared/errors.js';
 import { storage } from '../storage/index.js';
 import { SESSION_TTL_SECONDS, STATE_EXPIRATION_MS } from '../../shared/constants.js';
 
+
+
 /**
  * Supported MCP transport types
  */
@@ -66,12 +66,8 @@ export interface MCPOAuthClientOptions {
   serverId?: string; /** Optional - loaded from session if not provided */
   sessionId: string; /** Required - primary key for session lookup */
   transportType?: TransportType;
-  tokens?: OAuthTokens;
-  tokenExpiresAt?: number;
-  clientInformation?: OAuthClientInformationFull;
   clientId?: string;
   clientSecret?: string;
-  onSaveTokens?: (tokens: OAuthTokens) => void;
   headers?: Record<string, string>;
   /** OAuth Client Metadata (optional - user application info) */
   clientName?: string;
@@ -97,12 +93,8 @@ export class MCPClient {
   private serverUrl: string | undefined;
   private callbackUrl: string | undefined;
   private onRedirect: ((url: string) => void) | undefined;
-  private tokens?: OAuthTokens;
-  private tokenExpiresAt?: number;
-  private clientInformation?: OAuthClientInformationFull;
   private clientId?: string;
   private clientSecret?: string;
-  private onSaveTokens?: (tokens: OAuthTokens) => void;
   private headers?: Record<string, string>;
   /** OAuth Client Metadata */
   private clientName?: string;
@@ -135,12 +127,8 @@ export class MCPClient {
     this.serverId = options.serverId;
     this.sessionId = options.sessionId;
     this.transportType = options.transportType;
-    this.tokens = options.tokens;
-    this.tokenExpiresAt = options.tokenExpiresAt;
-    this.clientInformation = options.clientInformation;
     this.clientId = options.clientId;
     this.clientSecret = options.clientSecret;
-    this.onSaveTokens = options.onSaveTokens;
     this.headers = options.headers;
     this.clientName = options.clientName;
     this.clientUri = options.clientUri;
