@@ -22,7 +22,6 @@ export function ConnectionItem({ connection, onDisconnect }: ConnectionItemProps
   const [expanded, setExpanded] = useState(false);
   const sessionIdStr = String(connection.sessionId);
   const stateColor = stateColors[connection.state] || stateColors.DISCONNECTED;
-
   return (
     <div className="border border-zinc-800 rounded-md overflow-hidden">
       <div
@@ -39,16 +38,14 @@ export function ConnectionItem({ connection, onDisconnect }: ConnectionItemProps
           </span>
         </div>
         <ChevronDown
-          className={`w-4 h-4 text-zinc-500 transition-transform duration-200 ${
-            expanded ? 'rotate-180' : ''
-          }`}
+          className={`w-4 h-4 text-zinc-500 transition-transform duration-200 ${expanded ? 'rotate-180' : ''
+            }`}
         />
       </div>
 
       <div
-        className={`grid transition-all duration-200 ease-out ${
-          expanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
-        }`}
+        className={`grid transition-all duration-200 ease-out ${expanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
+          }`}
       >
         <div className="overflow-hidden">
           <div className="px-3 py-2 space-y-2 border-t border-zinc-800 bg-zinc-900/50">
@@ -65,6 +62,10 @@ export function ConnectionItem({ connection, onDisconnect }: ConnectionItemProps
                 <span className="font-mono text-zinc-300">{sessionIdStr.slice(0, 12)}...</span>
               </div>
               <div className="flex justify-between">
+                <span>ServerId:</span>
+                <span className="font-mono text-zinc-300">{connection.serverId}</span>
+              </div>
+              <div className="flex justify-between">
                 <span>URL:</span>
                 <span className="font-mono text-zinc-300 truncate max-w-[150px]">{connection.serverUrl}</span>
               </div>
@@ -72,8 +73,11 @@ export function ConnectionItem({ connection, onDisconnect }: ConnectionItemProps
                 <span>Transport:</span>
                 <span className="text-zinc-300">{connection.transport || 'auto'}</span>
               </div>
+              <div className="flex justify-between">
+                <span>Created At:</span>
+                <span className="text-zinc-300">{new Date(connection.createdAt).toLocaleString()}</span>
+              </div>
             </div>
-
             {connection.tools && connection.tools.length > 0 && (
               <div className="pt-2 border-t border-zinc-800">
                 <p className="text-xs text-zinc-500 mb-1">{connection.tools.length} tools available</p>

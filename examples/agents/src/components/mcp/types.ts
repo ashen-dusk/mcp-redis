@@ -12,6 +12,7 @@ export interface Connection {
   state: string;
   error?: string;
   tools?: Tool[];
+  createdAt: Date; // this specifies when the session is initialized/created
 }
 
 export interface ConnectConfig {
